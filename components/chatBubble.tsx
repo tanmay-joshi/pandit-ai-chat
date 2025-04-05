@@ -7,7 +7,15 @@ interface ChatBubbleProps {
 }
 
 export default function ChatBubble({ message }: ChatBubbleProps) {
+  // User and assistant messages should be displayed, others typically aren't
   const isUser = message.role === "user";
+  const isAssistant = message.role === "assistant";
+  
+  // Skip rendering for non-user/assistant messages 
+  // (like system messages which are instructions for the AI)
+  if (!isUser && !isAssistant) {
+    return null;
+  }
 
   return (
     <div

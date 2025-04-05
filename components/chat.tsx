@@ -1,64 +1,25 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Card, CardContent, CardFooter } from "./ui/card";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
-import { Message } from "../lib/types";
 import ChatBubble from "./chatBubble";
+import { useChat } from "ai/react";
 
 export default function Chat() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  
+  // Use the useChat hook from the AI SDK
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat();
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (input.trim() === "") return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input.trim(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages: [...messages, userMessage],
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch response");
-      }
-
-      const botMessage = await response.json();
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      // Add an error message to the chat
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          role: "assistant",
-          content: "Sorry, there was an error processing your request.",
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
+  // Handle Enter key press
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      formRef.current?.requestSubmit();
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -71,7 +32,14 @@ export default function Chat() {
           </div>
         ) : (
           messages.map((message) => (
-            <ChatBubble key={message.id} message={message} />
+            <ChatBubble 
+              key={message.id} 
+              message={{
+                id: message.id,
+                role: message.role,
+                content: message.content,
+              }} 
+            />
           ))
         )}
         {isLoading && (
@@ -93,13 +61,8 @@ export default function Chat() {
             placeholder="Type your message here..."
             className="min-h-10 flex-1 resize-none"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                formRef.current?.requestSubmit();
-              }
-            }}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
           />
           <Button type="submit" size="icon" disabled={isLoading}>
             <svg
