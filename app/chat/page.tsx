@@ -5,11 +5,26 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import AgentSelector from "@/components/AgentSelector";
+import Image from "next/image";
+
+type Agent = {
+  id: string;
+  name: string;
+  description: string;
+  avatar: string | null;
+};
+
+type Chat = {
+  id: string;
+  title: string;
+  updatedAt: string;
+  agent: Agent | null;
+};
 
 export default function ChatPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [chats, setChats] = useState<any[]>([]);
+  const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string | undefined>(undefined);
@@ -112,6 +127,26 @@ export default function ChatPage() {
             <Link key={chat.id} href={`/chat/${chat.id}`}>
               <div className="cursor-pointer rounded-lg border border-gray-200 p-4 shadow-sm transition hover:shadow-md">
                 <h2 className="mb-2 text-xl font-semibold">{chat.title}</h2>
+                {chat.agent && (
+                  <div className="flex items-center mb-2">
+                    {chat.agent.avatar ? (
+                      <div className="relative w-5 h-5 mr-1 rounded-full overflow-hidden">
+                        <Image 
+                          src={chat.agent.avatar} 
+                          alt={chat.agent.name}
+                          width={20}
+                          height={20}
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-5 h-5 mr-1 rounded-full bg-blue-200 flex items-center justify-center">
+                        <span className="text-blue-700 text-xs font-bold">{chat.agent.name.charAt(0)}</span>
+                      </div>
+                    )}
+                    <span className="text-sm text-blue-700">{chat.agent.name}</span>
+                  </div>
+                )}
                 <p className="text-sm text-gray-500">
                   {new Date(chat.updatedAt).toLocaleString()}
                 </p>

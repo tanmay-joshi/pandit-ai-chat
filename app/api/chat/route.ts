@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     const chats = await prisma.chat.findMany({
       where: { userId: user.id },
       orderBy: { updatedAt: "desc" },
+      include: { agent: true },
     });
 
     return NextResponse.json(chats);
