@@ -6,7 +6,7 @@ import { authOptions } from "../../auth/[...nextauth]/route";
 // Get a specific chat with its messages
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -23,8 +23,7 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Directly await params.id
-    const chatId = await params.id;
+    const { id: chatId } = await params;
 
     const chat = await prisma.chat.findUnique({
       where: { id: chatId },
@@ -56,7 +55,7 @@ export async function GET(
 // Update a chat (e.g., change title)
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -73,8 +72,7 @@ export async function PATCH(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Directly await params.id
-    const chatId = await params.id;
+    const { id: chatId } = await params;
 
     const chat = await prisma.chat.findUnique({
       where: { id: chatId },
@@ -109,7 +107,7 @@ export async function PATCH(
 // Delete a chat
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -126,8 +124,7 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Directly await params.id
-    const chatId = await params.id;
+    const { id: chatId } = await params;
 
     const chat = await prisma.chat.findUnique({
       where: { id: chatId },

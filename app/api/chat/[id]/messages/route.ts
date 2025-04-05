@@ -66,11 +66,12 @@ const createPanditAI = () => {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any }
 ) {
   try {
-    // Directly await params.id
-    const chatId = await params.id;
+    // Await params to get id
+    const { id: chatId } = await params;
+    
     if (!chatId) {
       return NextResponse.json({ error: "Chat ID is required" }, { status: 400 });
     }
