@@ -70,6 +70,8 @@ model Chat {
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages  Message[]
+  agentId   String?   // Optional to maintain backward compatibility
+  agent     Agent?    @relation(fields: [agentId], references: [id])
 }
 
 model Message {
@@ -81,4 +83,17 @@ model Message {
   chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// New Agent model for different AI personalities
+model Agent {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  avatar      String?  // URL to avatar image
+  systemPrompt String  // Instructions for the AI's personality/behavior
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  chats       Chat[]
 }

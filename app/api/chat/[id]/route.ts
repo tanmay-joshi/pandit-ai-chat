@@ -31,6 +31,7 @@ export async function GET(
         messages: {
           orderBy: { createdAt: "asc" },
         },
+        agent: true,
       },
     });
 
