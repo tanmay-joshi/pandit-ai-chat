@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 
 type Message = {
   id: string;
@@ -12,10 +13,19 @@ type Message = {
   createdAt: string;
 };
 
+type Agent = {
+  id: string;
+  name: string;
+  description: string;
+  avatar: string | null;
+  systemPrompt: string;
+};
+
 type Chat = {
   id: string;
   title: string;
   messages: Message[];
+  agent?: Agent | null;
 };
 
 export default function ChatPageClient({ id }: { id: string }) {
@@ -203,7 +213,29 @@ export default function ChatPageClient({ id }: { id: string }) {
       {/* Header */}
       <header className="border-b border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">{chat.title}</h1>
+          <div className="flex items-center">
+            <h1 className="text-xl font-bold">{chat.title}</h1>
+            {chat.agent && (
+              <div className="flex items-center ml-3 px-2 py-1 bg-blue-50 rounded-full text-sm">
+                {chat.agent.avatar ? (
+                  <div className="relative w-5 h-5 mr-1 rounded-full overflow-hidden">
+                    <Image 
+                      src={chat.agent.avatar} 
+                      alt={chat.agent.name}
+                      width={20}
+                      height={20}
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-5 h-5 mr-1 rounded-full bg-blue-200 flex items-center justify-center">
+                    <span className="text-blue-700 text-xs font-bold">{chat.agent.name.charAt(0)}</span>
+                  </div>
+                )}
+                <span className="text-blue-700">{chat.agent.name}</span>
+              </div>
+            )}
+          </div>
           <Link
             href="/chat"
             className="rounded-md bg-gray-100 px-3 py-1 text-sm transition hover:bg-gray-200"
@@ -216,9 +248,37 @@ export default function ChatPageClient({ id }: { id: string }) {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto bg-gray-50 p-4">
         {chat.messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center text-center">
-            <h2 className="text-xl font-semibold">Start the conversation</h2>
-            <p className="mt-2 text-gray-500">Send a message to begin chatting with Pandit AI</p>
+          <div className="flex h-full flex-col items-center justify-center">
+            <div className="mb-4 rounded-full bg-blue-100 p-3">
+              {chat.agent && chat.agent.avatar ? (
+                <div className="relative h-16 w-16 overflow-hidden rounded-full">
+                  <Image
+                    src={chat.agent.avatar}
+                    alt={chat.agent.name}
+                    width={64}
+                    height={64}
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-200">
+                  <span className="text-2xl font-bold text-blue-700">
+                    {chat.agent ? chat.agent.name.charAt(0) : "P"}
+                  </span>
+                </div>
+              )}
+            </div>
+            <h2 className="mb-2 text-xl font-medium">
+              {chat.agent ? `Welcome to your consultation with ${chat.agent.name}` : "Start your conversation"}
+            </h2>
+            {chat.agent && (
+              <p className="mb-6 max-w-md text-center text-gray-600">
+                {chat.agent.description}
+              </p>
+            )}
+            <p className="text-center text-sm text-gray-500">
+              Type your first message below to begin.
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -230,27 +290,50 @@ export default function ChatPageClient({ id }: { id: string }) {
                 }`}
               >
                 <div
-                  className={`max-w-[70%] rounded-lg p-3 ${
+                  className={`max-w-3/4 rounded-lg px-4 py-2 ${
                     message.role === "user"
                       ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-800 shadow"
+                      : "border border-gray-200 bg-white"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">
-                    {message.content || (message.role === "assistant" && sending ? (
-                      <span className="flex items-center">
-                        <span className="h-2 w-2 bg-gray-400 rounded-full animate-pulse mr-1"></span>
-                        <span className="h-2 w-2 bg-gray-400 rounded-full animate-pulse mr-1" style={{ animationDelay: "0.2s" }}></span>
-                        <span className="h-2 w-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: "0.4s" }}></span>
+                  {message.role === "assistant" && chat.agent && (
+                    <div className="mb-1 flex items-center">
+                      {chat.agent.avatar ? (
+                        <div className="relative mr-2 h-5 w-5 overflow-hidden rounded-full">
+                          <Image
+                            src={chat.agent.avatar}
+                            alt={chat.agent.name}
+                            width={20}
+                            height={20}
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-100">
+                          <span className="text-xs font-bold text-blue-700">
+                            {chat.agent.name.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                      <span className="text-xs font-medium text-blue-600">
+                        {chat.agent.name}
                       </span>
-                    ) : "")}
-                  </p>
-                  <div
-                    className={`mt-1 text-xs ${
-                      message.role === "user" ? "text-blue-100" : "text-gray-400"
-                    }`}
-                  >
-                    {new Date(message.createdAt).toLocaleTimeString()}
+                    </div>
+                  )}
+                  <div className="whitespace-pre-wrap">
+                    {message.content || (message.role === "assistant" && sending ? (
+                      <div className="flex items-center">
+                        <div className="mr-2 h-2 w-2 animate-pulse rounded-full bg-gray-300"></div>
+                        <div className="mr-2 h-2 w-2 animate-pulse rounded-full bg-gray-300 delay-100"></div>
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-gray-300 delay-200"></div>
+                      </div>
+                    ) : '')}
+                  </div>
+                  <div className="mt-1 text-right text-xs opacity-50">
+                    {new Date(message.createdAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </div>
                 </div>
               </div>
@@ -260,23 +343,23 @@ export default function ChatPageClient({ id }: { id: string }) {
         )}
       </div>
 
-      {/* Input */}
+      {/* Input area */}
       <div className="border-t border-gray-200 bg-white p-4">
-        <form onSubmit={sendMessage} className="flex space-x-2">
+        <form onSubmit={sendMessage} className="flex">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 rounded-md border border-gray-300 p-2 focus:border-blue-500 focus:outline-none"
+            placeholder={`Ask ${chat.agent ? chat.agent.name : 'anything'}...`}
+            className="flex-1 rounded-l-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
             disabled={sending}
           />
           <button
             type="submit"
+            className="rounded-r-md bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 disabled:bg-blue-400"
             disabled={sending || !input.trim()}
-            className="rounded-md bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 disabled:bg-blue-400"
           >
-            {sending ? "Sending..." : "Send"}
+            Send
           </button>
         </form>
       </div>
