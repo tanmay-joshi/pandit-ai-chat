@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pandit AI Chat
+
+A modern Next.js application featuring an AI chatbot that serves as a Hindu spiritual guide, powered by OpenAI and LangChain.
+
+## Features
+
+- **AI Spiritual Guide**: Leverages GPT-4o to provide thoughtful guidance on Hindu practices, philosophy, scriptures, and traditions
+- **Real-time Streaming**: Implements streaming responses for a natural conversation experience
+- **Modern UI**: Built with Next.js, Tailwind CSS, and shadcn/ui for a clean, responsive interface
+- **LangChain Integration**: Uses LangChain for seamless AI interactions and prompt management
+
+## Technologies
+
+- [Next.js](https://nextjs.org/) - React framework
+- [OpenAI](https://openai.com/) - GPT-4o language model
+- [LangChain](https://js.langchain.com/) - Framework for LLM application development
+- [TailwindCSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [shadcn/ui](https://ui.shadcn.com/) - Re-usable components
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js 18+ and npm
+- OpenAI API key
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/tanmay-joshi/pandit-ai-chat.git
+   cd pandit-ai-chat
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-## Learn More
+3. Create a `.env.local` file in the root directory with your API keys:
+   ```
+   # OpenAI
+   OPENAI_API_KEY=your_openai_api_key_here
+   
+   # Optional: LangSmith for tracing (development only)
+   LANGSMITH_TRACING=true
+   LANGSMITH_API_KEY=your_langsmith_api_key_here
+   LANGSMITH_PROJECT=pandit-ai
+   
+   # For development only
+   LANGCHAIN_CALLBACKS_BACKGROUND=false
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Usage
 
-## Deploy on Vercel
+Simply type your questions about Hindu philosophy, scriptures, rituals, or spiritual practices in the chat interface, and Pandit AI will provide thoughtful, respectful guidance.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The application can be easily deployed to Vercel:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ftanmay-joshi%2Fpandit-ai-chat)
+
+## License
+
+MIT License
+
+## Acknowledgements
+
+- Inspired by [LangChain Next.js Template](https://github.com/langchain-ai/langchain-nextjs-template)
+- UI components from [shadcn/ui](https://ui.shadcn.com/)
