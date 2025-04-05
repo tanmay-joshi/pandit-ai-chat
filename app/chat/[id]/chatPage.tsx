@@ -35,6 +35,7 @@ export default function ChatPageClient({ id }: { id: string }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Redirect to login if not authenticated
@@ -75,6 +76,9 @@ export default function ChatPageClient({ id }: { id: string }) {
     e.preventDefault();
     if (!input.trim() || !chat || !id) return;
 
+    // Clear any previous errors
+    setError(null);
+    
     const userMessage = input.trim();
     setInput("");
     setSending(true);
@@ -115,9 +119,27 @@ export default function ChatPageClient({ id }: { id: string }) {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Server error:", errorText);
-        throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
+        const data = await response.json();
+        
+        // Special handling for insufficient credits
+        if (response.status === 402) {
+          setError(`Insufficient credits. You have ${data.balance} credits, but need ${data.required} for this message.`);
+        } else {
+          setError(data.error || "Failed to send message");
+        }
+        
+        // Remove the optimistic messages
+        setChat((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            messages: prev.messages.filter(m => 
+              m.id !== optimisticUserMsg.id && m.id !== optimisticAiMsg.id
+            )
+          };
+        });
+        
+        throw new Error(data.error || `Failed to send message: ${response.status} ${response.statusText}`);
       }
       
       // Get the AI message ID from headers
@@ -176,14 +198,21 @@ export default function ChatPageClient({ id }: { id: string }) {
     } catch (error) {
       console.error("Error sending message:", error);
       
-      // Keep the user message but remove the AI message on error
-      setChat((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          messages: prev.messages.filter(m => m.id !== optimisticAiMsg.id)
-        };
-      });
+      // If we haven't already set an error message, set a generic one
+      if (!error) {
+        setError("Failed to send message. Please try again later.");
+      }
+      
+      // Keep the user message but remove the AI message on error if we haven't already
+      if (!error) {
+        setChat((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            messages: prev.messages.filter(m => m.id !== optimisticAiMsg.id)
+          };
+        });
+      }
     } finally {
       setSending(false);
     }
@@ -247,6 +276,18 @@ export default function ChatPageClient({ id }: { id: string }) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto bg-gray-50 p-4">
+        {/* Show error message if there is one */}
+        {error && (
+          <div className="mb-4 rounded-md bg-red-50 p-4 text-red-700">
+            <p>{error}</p>
+            {error.includes("Insufficient credits") && (
+              <Link href="/wallet/recharge" className="mt-2 inline-block font-medium text-red-700 hover:underline">
+                Recharge your wallet
+              </Link>
+            )}
+          </div>
+        )}
+        
         {chat.messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center">
             <div className="mb-4 rounded-full bg-blue-100 p-3">
@@ -362,6 +403,9 @@ export default function ChatPageClient({ id }: { id: string }) {
             Send
           </button>
         </form>
+        <div className="mt-2 text-xs text-gray-500">
+          Each AI response costs 10 credits. Your messages are free.
+        </div>
       </div>
     </div>
   );

@@ -51,6 +51,7 @@ model User {
   sessions      Session[]
   chats         Chat[]
   messages      Message[]
+  wallet        Wallet?   // One-to-one relation with wallet
 }
 
 model VerificationToken {
@@ -83,6 +84,8 @@ model Message {
   chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cost      Int      @default(10) // Cost of the message (default: 10 credits)
+  paid      Boolean  @default(false) // Track if the message was paid for
 }
 
 // New Agent model for different AI personalities
@@ -96,4 +99,26 @@ model Agent {
   updatedAt   DateTime @updatedAt
   isActive    Boolean  @default(true)
   chats       Chat[]
+}
+
+// New Wallet model for user credits
+model Wallet {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance     Int      @default(0) // User's credit balance
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  transactions Transaction[]
+}
+
+// Transaction history for wallet
+model Transaction {
+  id          String   @id @default(cuid())
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  amount      Int      // Amount added (positive) or deducted (negative)
+  description String   // Description of the transaction
+  type        String   // "recharge", "purchase", "refund" etc.
+  createdAt   DateTime @default(now())
 }

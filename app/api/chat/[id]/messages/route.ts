@@ -14,6 +14,9 @@ import {
 // The default system prompt if no agent is specified
 const DEFAULT_SYSTEM_PROMPT = `You are a helpful, knowledgeable, and friendly AI assistant. Answer user questions accurately and provide useful information.`;
 
+// Cost per message in credits
+const MESSAGE_COST = 10;
+
 // Create the AI chain with the specified system prompt
 const createAIChain = (systemPrompt: string) => {
   // Initialize the OpenAI model with streaming
@@ -63,10 +66,50 @@ export async function POST(
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
+      include: { wallet: true }
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Check if user has a wallet and sufficient balance
+    if (!user.wallet) {
+      // Create a wallet with initial credits if user doesn't have one
+      await prisma.wallet.create({
+        data: {
+          userId: user.id,
+          balance: 100, // Start with 100 free credits
+          transactions: {
+            create: {
+              amount: 100,
+              type: "welcome_bonus",
+              description: "Welcome bonus"
+            }
+          }
+        }
+      });
+      
+      // Refetch user with the new wallet
+      const updatedUser = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        include: { wallet: true }
+      });
+      
+      if (!updatedUser || !updatedUser.wallet) {
+        return NextResponse.json({ error: "Failed to create wallet" }, { status: 500 });
+      }
+      
+      user.wallet = updatedUser.wallet;
+    }
+    
+    // Check if user has enough credits for a message (only AI response now)
+    if (user.wallet.balance < MESSAGE_COST) {
+      return NextResponse.json({ 
+        error: "Insufficient credits", 
+        balance: user.wallet.balance,
+        required: MESSAGE_COST
+      }, { status: 402 }); // 402 Payment Required
     }
 
     // Get the chat along with its agent if one is associated
@@ -92,6 +135,7 @@ export async function POST(
       );
     }
 
+    // No longer deducting credits for user messages
     // Save user message to database
     const userMessage = await prisma.message.create({
       data: {
@@ -99,6 +143,8 @@ export async function POST(
         role: "user",
         chatId,
         userId: user.id,
+        cost: 0,  // User messages are free
+        paid: true
       }
     });
 
@@ -112,6 +158,21 @@ export async function POST(
     // Initialize the AI chain with the appropriate system prompt
     const aiChain = createAIChain(systemPrompt);
 
+    // Deduct credits for AI message
+    await prisma.wallet.update({
+      where: { id: user.wallet.id },
+      data: {
+        balance: { decrement: MESSAGE_COST },
+        transactions: {
+          create: {
+            amount: -MESSAGE_COST,
+            type: "message_fee",
+            description: "AI response fee"
+          }
+        }
+      }
+    });
+
     // Create a placeholder AI message in the database
     const aiMessage = await prisma.message.create({
       data: {
@@ -119,6 +180,8 @@ export async function POST(
         role: "assistant",
         chatId,
         userId: user.id,
+        cost: MESSAGE_COST,
+        paid: true
       }
     });
 
@@ -196,6 +259,21 @@ export async function POST(
       });
     } catch (error) {
       console.error("AI processing error:", error);
+      
+      // Refund the AI message fee if there's an error
+      await prisma.wallet.update({
+        where: { id: user.wallet.id },
+        data: {
+          balance: { increment: MESSAGE_COST },
+          transactions: {
+            create: {
+              amount: MESSAGE_COST,
+              type: "refund",
+              description: "Refund for failed AI response"
+            }
+          }
+        }
+      });
       
       // Clean up the AI message on error
       try {
