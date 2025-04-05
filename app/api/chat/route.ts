@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createPanditAI } from "../../../lib/utils/claude";
+import { createPanditAI } from "../../../lib/utils/openai";
 import { Message } from "../../../lib/types";
 import { StreamingTextResponse } from "ai";
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       );
     }
     
-    // Get the pandit AI chain
+    // Get the pandit AI chain (now using OpenAI)
     const panditChain = createPanditAI();
     
     // Get a streaming response from the model
