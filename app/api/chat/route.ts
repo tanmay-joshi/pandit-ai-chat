@@ -53,12 +53,24 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { title } = body;
+    const { title, agentId } = body;
+
+    // If agentId is provided, verify that the agent exists
+    if (agentId) {
+      const agent = await prisma.agent.findUnique({
+        where: { id: agentId },
+      });
+
+      if (!agent) {
+        return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+      }
+    }
 
     const newChat = await prisma.chat.create({
       data: {
         title: title || "New Chat",
         userId: user.id,
+        agentId: agentId || null,
       },
     });
 

@@ -11,32 +11,11 @@ import {
   RunnablePassthrough 
 } from "@langchain/core/runnables";
 
-// The Pandit AI system prompt that guides OpenAI to respond like a Hindu spiritual guide
-const PANDIT_SYSTEM_PROMPT = `You are Pandit AI, a knowledgeable Hindu spiritual guide with deep expertise in Hindu scriptures, philosophy, and traditions.
+// The default system prompt if no agent is specified
+const DEFAULT_SYSTEM_PROMPT = `You are a helpful, knowledgeable, and friendly AI assistant. Answer user questions accurately and provide useful information.`;
 
-Your purpose is to provide accurate, thoughtful guidance on Hindu practices, philosophy, scriptures like the Vedas, Upanishads, Bhagavad Gita, Puranas, and other sacred texts.
-
-Please assist users with:
-- Understanding Hindu philosophy (Vedanta, Samkhya, Yoga, etc.)
-- Interpreting scriptures and sacred texts
-- Explaining rituals, customs, and festivals
-- Providing spiritual guidance based on Hindu principles
-- Answering questions about deities, mantras, and worship practices
-- Sharing wisdom from ancient Hindu traditions
-
-When responding:
-- Be respectful, compassionate, and non-judgmental
-- Provide context and nuance when discussing complex topics
-- Acknowledge diverse perspectives within Hinduism
-- Cite specific scriptures or texts when relevant
-- Use Sanskrit terms where appropriate, with translations
-- Avoid being prescriptive about personal life choices
-- Maintain the spiritual essence of Hindu traditions
-
-If you don't know something, acknowledge your limitations rather than providing incorrect information.`;
-
-// Create the Pandit AI chain
-const createPanditAI = () => {
+// Create the AI chain with the specified system prompt
+const createAIChain = (systemPrompt: string) => {
   // Initialize the OpenAI model with streaming
   const model = new ChatOpenAI({
     modelName: "gpt-4o",
@@ -45,9 +24,9 @@ const createPanditAI = () => {
     openAIApiKey: process.env.OPENAI_API_KEY,
   });
 
-  // Create a prompt template for Pandit AI
+  // Create a prompt template with the provided system prompt
   const prompt = ChatPromptTemplate.fromMessages([
-    ["system", PANDIT_SYSTEM_PROMPT],
+    ["system", systemPrompt],
     ["human", "{input}"],
   ]);
 
@@ -90,12 +69,11 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Use explicit Prisma client querying to avoid type issues
-    const chats = await prisma.$queryRaw`
-      SELECT * FROM "Chat" WHERE id = ${chatId}
-    ` as Array<any>;
-    
-    const chat = chats[0];
+    // Get the chat along with its agent if one is associated
+    const chat = await prisma.chat.findUnique({
+      where: { id: chatId },
+      include: { agent: true }
+    });
 
     if (!chat) {
       return NextResponse.json({ error: "Chat not found" }, { status: 404 });
@@ -114,30 +92,41 @@ export async function POST(
       );
     }
 
-    // Save user message to database with raw query
-    const userMessageResults = await prisma.$queryRaw`
-      INSERT INTO "Message" (id, content, role, "chatId", "userId", "createdAt")
-      VALUES (${crypto.randomUUID()}, ${content}, 'user', ${chatId}, ${user.id}, ${new Date().toISOString()})
-      RETURNING *
-    ` as Array<any>;
-    
-    const userMessage = userMessageResults[0];
+    // Save user message to database
+    const userMessage = await prisma.message.create({
+      data: {
+        content,
+        role: "user",
+        chatId,
+        userId: user.id,
+      }
+    });
 
-    // Initialize the Pandit AI chain
-    const panditAI = createPanditAI();
+    // Determine which system prompt to use
+    let systemPrompt = DEFAULT_SYSTEM_PROMPT;
+    if (chat.agent && chat.agent.systemPrompt) {
+      systemPrompt = chat.agent.systemPrompt;
+      console.log(`Using agent ${chat.agent.name} with custom system prompt`);
+    }
+
+    // Initialize the AI chain with the appropriate system prompt
+    const aiChain = createAIChain(systemPrompt);
 
     // Create a placeholder AI message in the database
-    let aiMessageId = crypto.randomUUID();
-    await prisma.$queryRaw`
-      INSERT INTO "Message" (id, content, role, "chatId", "userId", "createdAt")
-      VALUES (${aiMessageId}, '', 'assistant', ${chatId}, ${user.id}, ${new Date().toISOString()})
-    `;
+    const aiMessage = await prisma.message.create({
+      data: {
+        content: "",
+        role: "assistant",
+        chatId,
+        userId: user.id,
+      }
+    });
 
     try {
-      console.log("Starting AI stream for message:", aiMessageId);
+      console.log("Starting AI stream for message:", aiMessage.id);
       
       // Get a streaming response from the model
-      const stream = await panditAI.stream(content);
+      const stream = await aiChain.stream(content);
       
       // Set up a background process to collect the full text and update the database
       let fullResponse = "";
@@ -163,11 +152,10 @@ export async function POST(
               (async () => {
                 try {
                   console.log("AI stream complete, updating database with response of length:", fullResponse.length);
-                  await prisma.$queryRaw`
-                    UPDATE "Message" 
-                    SET content = ${fullResponse}
-                    WHERE id = ${aiMessageId}
-                  `;
+                  await prisma.message.update({
+                    where: { id: aiMessage.id },
+                    data: { content: fullResponse }
+                  });
                   console.log("Database updated with full response");
                 } catch (error) {
                   console.error("Error updating database:", error);
@@ -200,7 +188,7 @@ export async function POST(
       
       // Set headers for the response
       const responseHeaders = new Headers();
-      responseHeaders.set('X-Message-Id', aiMessageId);
+      responseHeaders.set('X-Message-Id', aiMessage.id);
       
       // Return the streaming response
       return new StreamingTextResponse(streamForResponse, { 
@@ -211,10 +199,9 @@ export async function POST(
       
       // Clean up the AI message on error
       try {
-        await prisma.$queryRaw`
-          DELETE FROM "Message" 
-          WHERE id = ${aiMessageId}
-        `;
+        await prisma.message.delete({
+          where: { id: aiMessage.id }
+        });
         console.log("AI message cleaned up after error");
       } catch (deleteError) {
         console.error("Error deleting AI message:", deleteError);

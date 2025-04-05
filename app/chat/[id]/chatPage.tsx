@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 
 type Message = {
   id: string;
@@ -12,10 +13,19 @@ type Message = {
   createdAt: string;
 };
 
+type Agent = {
+  id: string;
+  name: string;
+  description: string;
+  avatar: string | null;
+  systemPrompt: string;
+};
+
 type Chat = {
   id: string;
   title: string;
   messages: Message[];
+  agent?: Agent | null;
 };
 
 export default function ChatPageClient({ id }: { id: string }) {
@@ -203,7 +213,29 @@ export default function ChatPageClient({ id }: { id: string }) {
       {/* Header */}
       <header className="border-b border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">{chat.title}</h1>
+          <div className="flex items-center">
+            <h1 className="text-xl font-bold">{chat.title}</h1>
+            {chat.agent && (
+              <div className="flex items-center ml-3 px-2 py-1 bg-blue-50 rounded-full text-sm">
+                {chat.agent.avatar ? (
+                  <div className="relative w-5 h-5 mr-1 rounded-full overflow-hidden">
+                    <Image 
+                      src={chat.agent.avatar} 
+                      alt={chat.agent.name}
+                      width={20}
+                      height={20}
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-5 h-5 mr-1 rounded-full bg-blue-200 flex items-center justify-center">
+                    <span className="text-blue-700 text-xs font-bold">{chat.agent.name.charAt(0)}</span>
+                  </div>
+                )}
+                <span className="text-blue-700">{chat.agent.name}</span>
+              </div>
+            )}
+          </div>
           <Link
             href="/chat"
             className="rounded-md bg-gray-100 px-3 py-1 text-sm transition hover:bg-gray-200"
