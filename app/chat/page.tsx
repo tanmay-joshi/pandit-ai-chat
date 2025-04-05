@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import AgentSelector from "@/components/AgentSelector";
+import WalletDisplay from "@/components/WalletDisplay";
 import Image from "next/image";
 
 type Agent = {
@@ -101,7 +102,11 @@ export default function ChatPage() {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="mb-8 text-3xl font-bold">Your Conversations</h1>
+      <h1 className="mb-4 text-3xl font-bold">Your Conversations</h1>
+      
+      <div className="mb-6">
+        <WalletDisplay />
+      </div>
       
       <button
         onClick={createNewChat}
