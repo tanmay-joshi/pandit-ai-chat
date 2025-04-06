@@ -115,7 +115,10 @@ export async function POST(
     // Get the chat along with its agent if one is associated
     const chat = await prisma.chat.findUnique({
       where: { id: chatId },
-      include: { agent: true }
+      include: { 
+        agent: true,
+        kundali: true 
+      }
     });
 
     if (!chat) {
@@ -153,6 +156,21 @@ export async function POST(
     if (chat.agent && chat.agent.systemPrompt) {
       systemPrompt = chat.agent.systemPrompt;
       console.log(`Using agent ${chat.agent.name} with custom system prompt`);
+    }
+
+    // If kundali is present, add it to the system prompt
+    if (chat.kundali) {
+      const kundaliInfo = `
+KUNDALI INFORMATION:
+Full Name: ${chat.kundali.fullName}
+Date of Birth: ${new Date(chat.kundali.dateOfBirth).toLocaleString()}
+Place of Birth: ${chat.kundali.placeOfBirth}
+
+Use this Kundali information to provide more personalized and relevant astrological guidance. 
+Make references to this information when appropriate in your responses.
+`;
+      
+      systemPrompt = `${systemPrompt}\n\n${kundaliInfo}`;
     }
 
     // Initialize the AI chain with the appropriate system prompt

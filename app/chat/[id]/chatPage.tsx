@@ -21,11 +21,19 @@ type Agent = {
   systemPrompt: string;
 };
 
+type Kundali = {
+  id: string;
+  fullName: string;
+  dateOfBirth: string;
+  placeOfBirth: string;
+};
+
 type Chat = {
   id: string;
   title: string;
   messages: Message[];
   agent?: Agent | null;
+  kundali?: Kundali | null;
 };
 
 export default function ChatPageClient({ id }: { id: string }) {
@@ -264,6 +272,14 @@ export default function ChatPageClient({ id }: { id: string }) {
                 <span className="text-blue-700">{chat.agent.name}</span>
               </div>
             )}
+            {chat.kundali && (
+              <div className="flex items-center ml-3 px-2 py-1 bg-purple-50 rounded-full text-sm">
+                <div className="w-5 h-5 mr-1 rounded-full bg-purple-200 flex items-center justify-center">
+                  <span className="text-purple-700 text-xs font-bold">K</span>
+                </div>
+                <span className="text-purple-700">{chat.kundali.fullName}</span>
+              </div>
+            )}
           </div>
           <Link
             href="/chat"
@@ -313,9 +329,19 @@ export default function ChatPageClient({ id }: { id: string }) {
               {chat.agent ? `Welcome to your consultation with ${chat.agent.name}` : "Start your conversation"}
             </h2>
             {chat.agent && (
-              <p className="mb-6 max-w-md text-center text-gray-600">
+              <p className="mb-3 max-w-md text-center text-gray-600">
                 {chat.agent.description}
               </p>
+            )}
+            {chat.kundali && (
+              <div className="mb-6 max-w-md bg-purple-50 p-4 rounded-lg">
+                <h3 className="text-center text-purple-700 font-medium mb-2">Kundali Information</h3>
+                <p className="text-sm text-center text-gray-700">
+                  <span className="font-medium">Name:</span> {chat.kundali.fullName}<br />
+                  <span className="font-medium">Born:</span> {new Date(chat.kundali.dateOfBirth).toLocaleString()}<br />
+                  <span className="font-medium">Place:</span> {chat.kundali.placeOfBirth}
+                </p>
+              </div>
             )}
             <p className="text-center text-sm text-gray-500">
               Type your first message below to begin.

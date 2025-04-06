@@ -52,6 +52,7 @@ model User {
   chats         Chat[]
   messages      Message[]
   wallet        Wallet?   // One-to-one relation with wallet
+  kundalis      Kundali[] // One-to-many relation with kundalis
 }
 
 model VerificationToken {
@@ -73,6 +74,8 @@ model Chat {
   messages  Message[]
   agentId   String?   // Optional to maintain backward compatibility
   agent     Agent?    @relation(fields: [agentId], references: [id])
+  kundaliId String?   // Link to Kundali
+  kundali   Kundali?  @relation(fields: [kundaliId], references: [id])
 }
 
 model Message {
@@ -121,4 +124,17 @@ model Transaction {
   description String   // Description of the transaction
   type        String   // "recharge", "purchase", "refund" etc.
   createdAt   DateTime @default(now())
+}
+
+// Kundali model for birth information
+model Kundali {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName    String   // Full name of the person
+  dateOfBirth DateTime // Date and time of birth
+  placeOfBirth String  // Place of birth
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  chats       Chat[]   // Chats that used this Kundali
 }
