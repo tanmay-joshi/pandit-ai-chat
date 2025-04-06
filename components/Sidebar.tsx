@@ -54,6 +54,39 @@ export function Sidebar() {
     }
   }, [session])
   
+  // Listen for new chat creation and updates
+  useEffect(() => {
+    const handleNewChat = (event: CustomEvent<{ id: string; title: string }>) => {
+      const newChat = event.detail;
+      setChats(prevChats => [
+        {
+          id: newChat.id,
+          title: newChat.title
+        },
+        ...prevChats
+      ]);
+    };
+
+    const handleChatUpdate = (event: CustomEvent<{ id: string; title: string }>) => {
+      const updatedChat = event.detail;
+      setChats(prevChats => prevChats.map(chat => 
+        chat.id === updatedChat.id 
+          ? { ...chat, title: updatedChat.title }
+          : chat
+      ));
+    };
+
+    // Add event listeners
+    window.addEventListener('chat-created', handleNewChat as EventListener);
+    window.addEventListener('chat-updated', handleChatUpdate as EventListener);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('chat-created', handleNewChat as EventListener);
+      window.removeEventListener('chat-updated', handleChatUpdate as EventListener);
+    };
+  }, []);
+  
   const fetchChats = async () => {
     try {
       const response = await fetch("/api/chat")
