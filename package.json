@@ -31,12 +31,18 @@
     "prisma": "^6.5.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "rehype-prism-plus": "^2.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.24.2",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^20.17.30",
     "@types/react": "^18.2.57",
     "@types/react-dom": "^18.2.19",
