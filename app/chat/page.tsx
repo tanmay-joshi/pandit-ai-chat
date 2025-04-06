@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import AgentSelector from "@/components/AgentSelector";
-import KundaliSelector from "@/components/KundaliSelector";
 import WalletDisplay from "@/components/WalletDisplay";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 type Agent = {
   id: string;
@@ -34,11 +34,6 @@ export default function ChatPage() {
   const router = useRouter();
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isCreatingChat, setIsCreatingChat] = useState(false);
-  const [selectedAgentId, setSelectedAgentId] = useState<string | undefined>(undefined);
-  const [selectedKundaliId, setSelectedKundaliId] = useState<string | undefined>(undefined);
-  const [creationStep, setCreationStep] = useState<'agent' | 'kundali'>('agent');
-  const [error, setError] = useState<string | null>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -63,64 +58,6 @@ export default function ChatPage() {
     }
   }, [status]);
 
-  const createNewChat = async () => {
-    if (isCreatingChat) {
-      // If we're already in creation mode, toggle back
-      setIsCreatingChat(false);
-      setSelectedAgentId(undefined);
-      setSelectedKundaliId(undefined);
-      setCreationStep('agent');
-      setError(null);
-      return;
-    }
-    
-    // Otherwise, show the agent selection UI
-    setIsCreatingChat(true);
-  };
-
-  const handleAgentSelect = async (agentId: string) => {
-    setSelectedAgentId(agentId);
-    setCreationStep('kundali');
-  };
-
-  const handleKundaliSelect = async (kundaliId: string) => {
-    setSelectedKundaliId(kundaliId);
-  };
-
-  const handleCreateChat = async () => {
-    if (!selectedAgentId || !selectedKundaliId) {
-      setError("Please select both an agent and a Kundali");
-      return;
-    }
-
-    setError(null);
-    
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          title: "New Chat", 
-          agentId: selectedAgentId,
-          kundaliId: selectedKundaliId
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to create chat");
-      }
-
-      const newChat = await res.json();
-      router.push(`/chat/${newChat.id}`);
-    } catch (error) {
-      console.error("Error creating new chat:", error);
-      setError(error instanceof Error ? error.message : "Failed to create chat");
-    }
-  };
-
   if (status === "loading" || loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -138,16 +75,12 @@ export default function ChatPage() {
       </div>
       
       <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={createNewChat}
-          className={`rounded-md px-4 py-2 text-white transition ${
-            isCreatingChat 
-              ? "bg-gray-600 hover:bg-gray-700" 
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {isCreatingChat ? "Cancel" : "Start New Chat"}
-        </button>
+        <Link href="/chat/new">
+          <Button className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Start New Chat
+          </Button>
+        </Link>
 
         <Link
           href="/kundali"
@@ -156,47 +89,6 @@ export default function ChatPage() {
           Manage Kundalis
         </Link>
       </div>
-
-      {isCreatingChat && (
-        <div className="mb-8 bg-white p-6 rounded-lg shadow">
-          <h2 className="mb-4 text-xl font-semibold">
-            {creationStep === 'agent'
-              ? "Step 1: Choose an AI to chat with"
-              : "Step 2: Select a Kundali for the consultation"}
-          </h2>
-          
-          {error && (
-            <div className="mb-4 rounded-md bg-red-50 p-4 text-red-700">
-              <p>{error}</p>
-            </div>
-          )}
-
-          {creationStep === 'agent' ? (
-            <AgentSelector onSelect={handleAgentSelect} selectedAgentId={selectedAgentId} />
-          ) : (
-            <>
-              <KundaliSelector onSelect={handleKundaliSelect} selectedKundaliId={selectedKundaliId} />
-              
-              <div className="mt-6 flex justify-between">
-                <button
-                  onClick={() => setCreationStep('agent')}
-                  className="rounded-md bg-gray-100 px-4 py-2 text-gray-700 transition hover:bg-gray-200"
-                >
-                  ← Back to Agent Selection
-                </button>
-                
-                <button
-                  onClick={handleCreateChat}
-                  disabled={!selectedKundaliId}
-                  className="rounded-md bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 disabled:bg-blue-400"
-                >
-                  Start Consultation
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      )}
 
       <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
         {chats.length > 0 ? (
@@ -241,6 +133,14 @@ export default function ChatPage() {
             <p className="mt-2 text-gray-500">
               Start a new conversation to chat with an AI assistant.
             </p>
+            <div className="mt-4">
+              <Link href="/chat/new">
+                <Button className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Start New Chat
+                </Button>
+              </Link>
+            </div>
           </div>
         )}
       </div>

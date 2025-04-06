@@ -5,12 +5,16 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Send } from "lucide-react";
 
 type Message = {
   id: string;
-  content: string;
-  role: "user" | "assistant";
+  content: string | React.ReactNode;
+  role: "user" | "assistant" | "system";
   createdAt: string;
+  hasOptions?: boolean;
 };
 
 type Agent = {
@@ -36,6 +40,14 @@ type Chat = {
   kundali?: Kundali | null;
 };
 
+enum SelectionStep {
+  Initial = 'initial',
+  SelectAgent = 'agent',
+  SelectKundali = 'kundali',
+  Ready = 'ready',
+  Chatting = 'chatting'
+}
+
 export default function ChatPageClient({ id }: { id: string }) {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -45,6 +57,15 @@ export default function ChatPageClient({ id }: { id: string }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // New chat setup states
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [kundalis, setKundalis] = useState<Kundali[]>([]);
+  const [step, setStep] = useState<SelectionStep>(SelectionStep.Initial);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [selectedKundaliId, setSelectedKundaliId] = useState<string | null>(null);
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -53,27 +74,350 @@ export default function ChatPageClient({ id }: { id: string }) {
     }
   }, [status, router]);
 
-  // Fetch chat data
+  // Determine if this is a new chat or an existing chat
+  const isNewChat = id === "new";
+
+  // Fetch chat data for existing chats or initialize new chat flow
   useEffect(() => {
-    if (status === "authenticated" && id) {
-      fetch(`/api/chat/${id}`)
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error("Chat not found");
-          }
-          return res.json();
-        })
-        .then((data) => {
-          setChat(data);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Failed to fetch chat:", error);
-          setLoading(false);
-          router.push("/chat");
-        });
+    if (status === "authenticated") {
+      if (isNewChat) {
+        initializeNewChat();
+      } else if (id) {
+        fetchExistingChat();
+      }
     }
-  }, [status, id, router]);
+  }, [status, id, isNewChat]);
+
+  // Initialize new chat selection process
+  const initializeNewChat = async () => {
+    try {
+      setLoading(true);
+      
+      // Initial welcome message with agent selection prompt
+      const initialMessages: Message[] = [
+        {
+          id: "welcome",
+          content: "Welcome to Pandit AI! I'll help you set up your consultation. First, please select a Pandit you'd like to consult with:",
+          role: "assistant" as const,
+          createdAt: new Date().toISOString(),
+          hasOptions: true
+        }
+      ];
+      
+      // Create initial chat state
+      setChat({
+        id: "new",
+        title: "New Consultation",
+        messages: initialMessages,
+      });
+      
+      // Fetch and display agents
+      await fetchAgents();
+      setLoading(false);
+    } catch (error) {
+      console.error("Error initializing new chat:", error);
+      setError("Failed to start new consultation. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  // Fetch existing chat data
+  const fetchExistingChat = async () => {
+    try {
+      const response = await fetch(`/api/chat/${id}`);
+      if (!response.ok) {
+        throw new Error("Chat not found");
+      }
+      const data = await response.json();
+      setChat(data);
+      setStep(SelectionStep.Chatting);
+      setLoading(false);
+    } catch (error) {
+      console.error("Failed to fetch chat:", error);
+      setLoading(false);
+      router.push("/chat");
+    }
+  };
+
+  // Fetch agents
+  const fetchAgents = async () => {
+    try {
+      console.log("Fetching agents...");
+      const response = await fetch("/api/agents");
+      
+      console.log("Agents API status:", response.status);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch agents: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log("Agents API response:", data);
+      
+      // Ensure data is an array before setting state
+      if (Array.isArray(data)) {
+        console.log("Setting agents array, length:", data.length);
+        setAgents(data);
+        setStep(SelectionStep.SelectAgent);
+        return data;
+      } else if (data.agents && Array.isArray(data.agents)) {
+        // Handle case where agents are nested under an 'agents' property
+        console.log("Found agents in nested property, length:", data.agents.length);
+        setAgents(data.agents);
+        setStep(SelectionStep.SelectAgent);
+        return data.agents;
+      } else {
+        console.error("Expected array of agents but received:", data);
+        setError("Received invalid data format for agents");
+        setAgents([]);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching agents:", error);
+      setError("Failed to load agents. Please try again.");
+      setAgents([]);
+      return [];
+    }
+  };
+
+  // Fetch kundalis after agent selection
+  const fetchKundalis = async () => {
+    try {
+      console.log("Fetching kundalis...");
+      const response = await fetch("/api/kundali");
+      
+      console.log("Kundali API status:", response.status);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch kundalis: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log("Kundali API response:", data);
+      
+      // Ensure data is an array before setting state
+      let kundalisList: Kundali[] = [];
+      
+      if (Array.isArray(data)) {
+        console.log("Setting kundalis array, length:", data.length);
+        kundalisList = data;
+        setKundalis(data);
+      } else if (data.kundalis && Array.isArray(data.kundalis)) {
+        // Handle case where kundalis are nested under a 'kundalis' property
+        console.log("Found kundalis in nested property, length:", data.kundalis.length);
+        kundalisList = data.kundalis;
+        setKundalis(data.kundalis);
+      } else {
+        console.error("Expected array of kundalis but received:", data);
+        setError("Received invalid data format for kundalis");
+        setKundalis([]);
+        return [];
+      }
+      
+      // Set the step for selection
+      setStep(SelectionStep.SelectKundali);
+      
+      return kundalisList;
+    } catch (error) {
+      console.error("Error fetching kundalis:", error);
+      setError("Failed to load kundalis. Please try again.");
+      setKundalis([]);
+      return [];
+    }
+  };
+
+  // Handle agent selection
+  const handleAgentSelect = async (agent: Agent) => {
+    console.log("Agent selected:", agent.name, agent.id);
+    setSelectedAgentId(agent.id);
+    
+    // Add user selection message
+    const userSelectMessage: Message = {
+      id: `user-agent-${Date.now()}`,
+      content: `I'd like to consult with ${agent.name}`,
+      role: "user" as const,
+      createdAt: new Date().toISOString(),
+    };
+    
+    // Update chat with user selection
+    if (chat) {
+      setChat({
+        ...chat,
+        messages: [...chat.messages, userSelectMessage]
+      });
+    }
+    
+    try {
+      // Fetch kundalis
+      const kundaliData = await fetchKundalis();
+      
+      if (!kundaliData || kundaliData.length === 0) {
+        // If no kundalis, prompt to create one
+        if (chat) {
+          setChat(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              messages: [
+                ...prev.messages,
+                {
+                  id: "no-kundali",
+                  content: "You don't have any Kundalis saved. Please create one to continue.",
+                  role: "assistant" as const,
+                  createdAt: new Date().toISOString(),
+                }
+              ]
+            };
+          });
+        }
+      } else {
+        // Add kundali selection prompt
+        if (chat) {
+          setChat(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              messages: [
+                ...prev.messages,
+                {
+                  id: "kundali-prompt",
+                  content: "Great! Now, please select a Kundali (birth chart) for your consultation:",
+                  role: "assistant" as const,
+                  createdAt: new Date().toISOString(),
+                  hasOptions: true
+                }
+              ]
+            };
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error after agent selection:", error);
+      if (chat) {
+        setChat(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            messages: [
+              ...prev.messages,
+              {
+                id: "error",
+                content: "There was an error loading your Kundalis. Please try again.",
+                role: "assistant" as const,
+                createdAt: new Date().toISOString(),
+              }
+            ]
+          };
+        });
+      }
+    }
+  };
+
+  // Handle kundali selection
+  const handleKundaliSelect = async (kundali: Kundali) => {
+    setSelectedKundaliId(kundali.id);
+    
+    if (chat) {
+      // Add selection message to chat
+      setChat({
+        ...chat,
+        messages: [
+          ...chat.messages,
+          {
+            id: `user-kundali-${Date.now()}`,
+            content: `I'll use the birth chart for ${kundali.fullName}`,
+            role: "user" as const,
+            createdAt: new Date().toISOString(),
+          }
+        ]
+      });
+      
+      // Show loading message
+      setChat({
+        ...chat,
+        messages: [
+          ...chat.messages,
+          {
+            id: `creating-${Date.now()}`,
+            content: "Creating your consultation...",
+            role: "assistant" as const,
+            createdAt: new Date().toISOString(),
+          }
+        ]
+      });
+    }
+    
+    // Create chat
+    try {
+      setIsCreatingChat(true);
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          title: "New Chat", 
+          agentId: selectedAgentId,
+          kundaliId: kundali.id
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to create chat");
+      }
+
+      const newChat = await res.json();
+      setChatId(newChat.id);
+      
+      // Update with the new chat ID
+      if (chat) {
+        setChat({
+          ...chat,
+          id: newChat.id,
+          messages: [
+            ...chat.messages,
+            {
+              id: `ready-${Date.now()}`,
+              content: "Your consultation is ready! You can now type your first message to begin the session.",
+              role: "assistant" as const,
+              createdAt: new Date().toISOString(),
+            }
+          ],
+          agent: agents.find(a => a.id === selectedAgentId) || null,
+          kundali: kundali
+        });
+      }
+      
+      setStep(SelectionStep.Ready);
+      
+      // Update the URL without refreshing the page
+      if (isNewChat) {
+        router.replace(`/chat/${newChat.id}`, { scroll: false });
+      }
+    } catch (error) {
+      console.error("Error creating chat:", error);
+      setError(error instanceof Error ? error.message : "Failed to create chat");
+      
+      // Add error message
+      if (chat) {
+        setChat({
+          ...chat,
+          messages: [
+            ...chat.messages,
+            {
+              id: `error-${Date.now()}`,
+              content: `Error: ${error instanceof Error ? error.message : "Failed to create chat"}. Please try again.`,
+              role: "assistant" as const,
+              createdAt: new Date().toISOString(),
+            }
+          ]
+        });
+      }
+    } finally {
+      setIsCreatingChat(false);
+    }
+  };
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -82,7 +426,17 @@ export default function ChatPageClient({ id }: { id: string }) {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !chat || !id) return;
+    if (!input.trim() || !chat) return;
+
+    let targetId = id;
+    if (isNewChat && chatId) {
+      targetId = chatId;
+    }
+
+    if (!targetId || targetId === "new") {
+      setError("Chat setup is not complete. Please select a Pandit and Kundali first.");
+      return;
+    }
 
     // Clear any previous errors
     setError(null);
@@ -118,7 +472,7 @@ export default function ChatPageClient({ id }: { id: string }) {
     try {
       console.log("Sending message to API...");
       // Send the message to the API with streaming response
-      const response = await fetch(`/api/chat/${id}/messages`, {
+      const response = await fetch(`/api/chat/${targetId}/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -202,6 +556,11 @@ export default function ChatPageClient({ id }: { id: string }) {
         throw new Error("Received empty response from AI");
       }
       
+      // After first message is sent in a new chat, move to chatting state
+      if (step === SelectionStep.Ready) {
+        setStep(SelectionStep.Chatting);
+      }
+      
       console.log("Streaming complete. Final response length:", receivedText.length);
     } catch (error) {
       console.error("Error sending message:", error);
@@ -224,6 +583,82 @@ export default function ChatPageClient({ id }: { id: string }) {
     } finally {
       setSending(false);
     }
+  };
+
+  // Render agent options
+  const renderAgentOptions = () => {
+    if (step !== SelectionStep.SelectAgent || !agents || agents.length === 0) return null;
+    
+    return (
+      <div className="flex flex-wrap gap-2 mt-2">
+        {agents.map((agent) => (
+          <Button
+            key={agent.id}
+            variant="outline"
+            className="flex items-center gap-2"
+            onClick={() => handleAgentSelect(agent)}
+          >
+            {agent.avatar ? (
+              <div className="relative w-4 h-4 rounded-full overflow-hidden">
+                <Image
+                  src={agent.avatar}
+                  alt={agent.name}
+                  width={16}
+                  height={16}
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center">
+                <span className="text-blue-700 text-[10px] font-bold">{agent.name.charAt(0)}</span>
+              </div>
+            )}
+            {agent.name}
+          </Button>
+        ))}
+      </div>
+    );
+  };
+
+  // Render kundali options
+  const renderKundaliOptions = () => {
+    console.log("Rendering kundali options", { 
+      step, 
+      kundalisLength: kundalis?.length || 0, 
+      kundalisData: kundalis 
+    });
+    
+    if (step !== SelectionStep.SelectKundali || !kundalis || kundalis.length === 0) {
+      console.log("Not rendering kundali options because conditions not met");
+      return null;
+    }
+    
+    return (
+      <div className="flex flex-col gap-2 mt-2">
+        {kundalis.map((kundali) => (
+          <Button
+            key={kundali.id}
+            variant="outline"
+            className="justify-start text-left"
+            onClick={() => handleKundaliSelect(kundali)}
+          >
+            <div>
+              <div className="font-medium">{kundali.fullName}</div>
+              <div className="text-xs text-gray-500">
+                Born: {new Date(kundali.dateOfBirth).toLocaleDateString()} in {kundali.placeOfBirth}
+              </div>
+            </div>
+          </Button>
+        ))}
+        <Button 
+          variant="link" 
+          className="self-start mt-1"
+          onClick={() => router.push("/kundali")}
+        >
+          + Add a new Kundali
+        </Button>
+      </div>
+    );
   };
 
   if (status === "loading" || loading) {
@@ -349,7 +784,7 @@ export default function ChatPageClient({ id }: { id: string }) {
           </div>
         ) : (
           <div className="space-y-4">
-            {chat.messages.map((message) => (
+            {chat.messages.map((message, index) => (
               <div
                 key={message.id}
                 className={`flex ${
@@ -363,7 +798,7 @@ export default function ChatPageClient({ id }: { id: string }) {
                       : "border border-gray-200 bg-white"
                   }`}
                 >
-                  {message.role === "assistant" && chat.agent && (
+                  {message.role === "assistant" && chat.agent && step !== SelectionStep.Initial && (
                     <div className="mb-1 flex items-center">
                       {chat.agent.avatar ? (
                         <div className="relative mr-2 h-5 w-5 overflow-hidden rounded-full">
@@ -395,6 +830,12 @@ export default function ChatPageClient({ id }: { id: string }) {
                         <div className="h-2 w-2 animate-pulse rounded-full bg-gray-300 delay-200"></div>
                       </div>
                     ) : '')}
+                    
+                    {/* Render options buttons for selection steps */}
+                    {message.hasOptions && message.id === "welcome" && renderAgentOptions()}
+                    {/* Ensure Kundali options are shown for the right message */}
+                    {((message.hasOptions && message.id === "kundali-prompt") || 
+                      (step === SelectionStep.SelectKundali && message.id === "kundali-prompt")) && renderKundaliOptions()}
                   </div>
                   <div className="mt-1 text-right text-xs opacity-50">
                     {new Date(message.createdAt).toLocaleTimeString([], {
@@ -413,24 +854,32 @@ export default function ChatPageClient({ id }: { id: string }) {
       {/* Input area */}
       <div className="border-t border-gray-200 bg-white p-4">
         <form onSubmit={sendMessage} className="flex">
-          <input
-            type="text"
+          <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={`Ask ${chat.agent ? chat.agent.name : 'anything'}...`}
-            className="flex-1 rounded-l-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
-            disabled={sending}
+            placeholder={step === SelectionStep.Ready || step === SelectionStep.Chatting 
+              ? `Ask ${chat.agent ? chat.agent.name : 'anything'}...` 
+              : "Please complete the setup process first..."}
+            className="min-h-9 flex-1 resize-none rounded-l-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+            disabled={sending || step !== SelectionStep.Ready && step !== SelectionStep.Chatting}
           />
-          <button
+          <Button
             type="submit"
-            className="rounded-r-md bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 disabled:bg-blue-400"
-            disabled={sending || !input.trim()}
+            className="rounded-r-md"
+            disabled={sending || !input.trim() || (step !== SelectionStep.Ready && step !== SelectionStep.Chatting)}
           >
-            Send
-          </button>
+            <Send className="h-4 w-4" />
+            <span className="sr-only">Send</span>
+          </Button>
         </form>
         <div className="mt-2 text-xs text-gray-500">
-          Each AI response costs 10 credits. Your messages are free.
+          {step !== SelectionStep.Ready && step !== SelectionStep.Chatting ? (
+            step === SelectionStep.Initial ? "Loading options..." : 
+            step === SelectionStep.SelectAgent ? "Please select a Pandit to continue" : 
+            "Please select a Kundali to continue"
+          ) : (
+            "Each AI response costs 10 credits. Your messages are free."
+          )}
         </div>
       </div>
     </div>

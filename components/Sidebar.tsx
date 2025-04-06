@@ -134,27 +134,29 @@ export function Sidebar() {
               <div className="mb-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-medium">Chats</h3>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-7 w-7 p-0" 
-                    onClick={handleNewChat}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <Link href="/chat/new">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 w-7 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </Link>
                 </div>
               </div>
             )}
             
             {!isExpanded && (
-              <Button 
-                variant="outline" 
-                size="icon"
-                className="mb-4 w-full h-9"
-                onClick={handleNewChat}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+              <Link href="/chat/new">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  className="mb-4 w-full h-9"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </Link>
             )}
             
             <div className="space-y-1">

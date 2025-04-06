@@ -30,11 +30,20 @@ export default function Home() {
     fetch("/api/agents")
       .then((res) => res.json())
       .then((data) => {
-        setPandits(data);
+        console.log("API response for agents:", data);
+        if (Array.isArray(data)) {
+          setPandits(data);
+        } else if (data.agents && Array.isArray(data.agents)) {
+          setPandits(data.agents);
+        } else {
+          console.error("Expected array of agents but received:", data);
+          setPandits([]);
+        }
         setLoading(false);
       })
       .catch((error) => {
         console.error("Failed to fetch pandits:", error);
+        setPandits([]);
         setLoading(false);
       });
   }, []);
@@ -69,29 +78,35 @@ export default function Home() {
               <h2 className="text-2xl font-semibold mb-6 text-center">Consult with our wise Pandits</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                {pandits.map((pandit) => (
-                  <div key={pandit.id} className="border border-gray-200 rounded-lg p-4 shadow-sm">
-                    <div className="flex items-center mb-3">
-                      {pandit.avatar ? (
-                        <div className="relative w-16 h-16 mr-4 rounded-full overflow-hidden">
-                          <Image 
-                            src={pandit.avatar} 
-                            alt={pandit.name}
-                            width={64}
-                            height={64}
-                            className="object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-16 h-16 mr-4 rounded-full bg-blue-100 flex items-center justify-center">
-                          <span className="text-blue-700 text-xl font-bold">{pandit.name.charAt(0)}</span>
-                        </div>
-                      )}
-                      <h3 className="text-xl font-medium">{pandit.name}</h3>
+                {Array.isArray(pandits) && pandits.length > 0 ? (
+                  pandits.map((pandit) => (
+                    <div key={pandit.id} className="border border-gray-200 rounded-lg p-4 shadow-sm">
+                      <div className="flex items-center mb-3">
+                        {pandit.avatar ? (
+                          <div className="relative w-16 h-16 mr-4 rounded-full overflow-hidden">
+                            <Image 
+                              src={pandit.avatar} 
+                              alt={pandit.name}
+                              width={64}
+                              height={64}
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-16 h-16 mr-4 rounded-full bg-blue-100 flex items-center justify-center">
+                            <span className="text-blue-700 text-xl font-bold">{pandit.name.charAt(0)}</span>
+                          </div>
+                        )}
+                        <h3 className="text-xl font-medium">{pandit.name}</h3>
+                      </div>
+                      <p className="text-gray-600 mb-4">{pandit.description}</p>
                     </div>
-                    <p className="text-gray-600 mb-4">{pandit.description}</p>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-4">
+                    <p>No Pandits available at the moment.</p>
                   </div>
-                ))}
+                )}
               </div>
               
               <div className="flex justify-center">
