@@ -11,5 +11,4 @@ const nextConfig = {
   },
 };
 
-// Export the config using CommonJS
 module.exports = nextConfig; 
