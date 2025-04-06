@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 type Agent = {
   id: string;
@@ -117,7 +118,7 @@ export default function ChatPage() {
                   </div>
                 )}
                 <p className="text-sm text-gray-500">
-                  {new Date(chat.updatedAt).toLocaleString()}
+                  {formatDate(chat.updatedAt)}
                 </p>
               </div>
             </Link>
