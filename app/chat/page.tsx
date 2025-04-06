@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import WalletDisplay from "@/components/WalletDisplay";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -69,10 +68,6 @@ export default function ChatPage() {
   return (
     <div className="container mx-auto p-6">
       <h1 className="mb-4 text-3xl font-bold">Your Conversations</h1>
-      
-      <div className="mb-6">
-        <WalletDisplay />
-      </div>
       
       <div className="flex items-center justify-between mb-6">
         <Link href="/chat/new">
