@@ -4,48 +4,48 @@
 
 @layer base {
   :root {
-    --radius: 0.625rem;
-    --background: #ffffff;
-    --foreground: #2f204a;
-    --card: #ffffff;
-    --card-foreground: #2f204a;
-    --popover: #ffffff;
-    --popover-foreground: #2f204a;
-    --primary: #2f204a;
-    --primary-foreground: #ffffff;
-    --secondary: #fcf7b3;
-    --secondary-foreground: #2f204a;
-    --muted: #f4f4f5;
-    --muted-foreground: #71717a;
-    --accent: #ff6efa;
-    --accent-foreground: #2f204a;
-    --destructive: #ef4444;
-    --destructive-foreground: #ffffff;
-    --border: #e4e4e7;
-    --input: #e4e4e7;
-    --ring: #ff6efa;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: #2f204a;
-    --foreground: #ffffff;
-    --card: #3a2a5a;
-    --card-foreground: #ffffff;
-    --popover: #3a2a5a;
-    --popover-foreground: #ffffff;
-    --primary: #ffffff;
-    --primary-foreground: #2f204a;
-    --secondary: #3a2a5a;
-    --secondary-foreground: #ffffff;
-    --muted: #3a2a5a;
-    --muted-foreground: #a1a1aa;
-    --accent: #ff6efa;
-    --accent-foreground: #ffffff;
-    --destructive: #ef4444;
-    --destructive-foreground: #ffffff;
-    --border: rgba(255, 255, 255, 0.1);
-    --input: rgba(255, 255, 255, 0.15);
-    --ring: #ff6efa;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
   }
 
   * {
@@ -223,4 +223,109 @@
 
 .markdown-body.loading * {
   @apply animate-pulse;
+}
+
+/* Custom prism light effects for landing page */
+.prism-light {
+  position: relative;
+  overflow: hidden;
+}
+
+.prism-light::before {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 0, 0, 0.1),
+    rgba(255, 165, 0, 0.1),
+    rgba(255, 255, 0, 0.1),
+    rgba(0, 128, 0, 0.1),
+    rgba(0, 0, 255, 0.1),
+    rgba(75, 0, 130, 0.1),
+    rgba(238, 130, 238, 0.1)
+  );
+  animation: prism-animate 8s linear infinite;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.rainbow-text {
+  background-image: linear-gradient(
+    to right,
+    #ff8a00,
+    #e52e71,
+    #b36efd,
+    #6428fd,
+    #00dabd
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 300% 100%;
+  animation: rainbow-text-animation 6s ease infinite;
+}
+
+@keyframes rainbow-text-animation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes prism-animate {
+  0% {
+    transform: translateX(-50%) translateY(-50%) rotate(0deg);
+  }
+  100% {
+    transform: translateX(-50%) translateY(-50%) rotate(360deg);
+  }
+}
+
+/* Prism light beam effect */
+.prism-beam {
+  position: relative;
+  overflow: hidden;
+}
+
+.prism-beam::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -100%;
+  width: 300%;
+  height: 10px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.6),
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transform: translateY(-50%) rotate(25deg);
+  animation: beam-animation 8s infinite linear;
+}
+
+@keyframes beam-animation {
+  0% {
+    transform: translateY(-50%) rotate(25deg) translateX(-30%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-50%) rotate(25deg) translateX(100%);
+    opacity: 0;
+  }
 }
