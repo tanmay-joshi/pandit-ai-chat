@@ -83,3 +83,144 @@
     @apply rounded-lg border-2 border-border bg-transparent px-4 py-2 focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none;
   }
 }
+
+.markdown-body {
+  @apply prose dark:prose-invert max-w-none;
+  @apply prose-pre:bg-muted prose-pre:border prose-pre:border-muted;
+  @apply prose-code:text-primary prose-code:bg-muted/50 prose-code:rounded prose-code:px-1;
+  @apply prose-a:text-primary prose-a:no-underline hover:prose-a:underline;
+  @apply prose-headings:scroll-mt-28;
+  @apply prose-p:my-2 prose-p:leading-relaxed;
+  @apply prose-ul:my-2 prose-ol:my-2;
+  @apply prose-li:my-0;
+  @apply prose-blockquote:my-2;
+}
+
+/* Adjust spacing for the last element to remove extra margin */
+.markdown-body > *:last-child {
+  @apply mb-0;
+}
+
+/* Ensure proper contrast in dark mode */
+.dark .markdown-body {
+  @apply prose-pre:bg-muted/50 prose-code:bg-muted/50;
+  @apply prose-a:text-accent hover:prose-a:text-accent/90;
+}
+
+/* Style adjustments for code blocks */
+.markdown-body pre {
+  @apply bg-muted/50 p-4 rounded-lg overflow-auto my-2;
+}
+
+.markdown-body code {
+  @apply bg-muted/50 px-1.5 py-0.5 rounded text-sm font-medium;
+}
+
+/* Inline code should be slightly smaller */
+.markdown-body :not(pre) > code {
+  @apply text-[0.9em];
+}
+
+/* List styling */
+.markdown-body ul {
+  @apply list-disc pl-6 my-2;
+}
+
+.markdown-body ol {
+  @apply list-decimal pl-6 my-2;
+}
+
+/* Blockquote styling */
+.markdown-body blockquote {
+  @apply border-l-4 border-muted pl-4 italic my-2;
+}
+
+/* Table styling */
+.markdown-body table {
+  @apply w-full border-collapse my-2;
+}
+
+.markdown-body th,
+.markdown-body td {
+  @apply border border-muted p-2;
+}
+
+/* Image styling */
+.markdown-body img {
+  @apply max-w-full h-auto rounded-lg my-2;
+}
+
+/* Heading styles */
+.markdown-body h1 {
+  @apply text-2xl font-bold mt-6 mb-4;
+}
+
+.markdown-body h2 {
+  @apply text-xl font-bold mt-5 mb-3;
+}
+
+.markdown-body h3 {
+  @apply text-lg font-bold mt-4 mb-2;
+}
+
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  @apply text-base font-bold mt-3 mb-2;
+}
+
+/* Math equation styling */
+.markdown-body .math {
+  @apply overflow-x-auto py-2;
+}
+
+.markdown-body .math-inline {
+  @apply inline-block align-middle;
+}
+
+/* Syntax highlighting theme adjustments */
+.markdown-body .token.comment,
+.markdown-body .token.prolog,
+.markdown-body .token.doctype,
+.markdown-body .token.cdata {
+  @apply text-muted-foreground;
+}
+
+.markdown-body .token.function,
+.markdown-body .token.keyword {
+  @apply text-accent;
+}
+
+.markdown-body .token.string,
+.markdown-body .token.attr-value {
+  @apply text-green-500 dark:text-green-400;
+}
+
+.markdown-body .token.number,
+.markdown-body .token.boolean {
+  @apply text-orange-500 dark:text-orange-400;
+}
+
+.markdown-body .token.operator,
+.markdown-body .token.entity,
+.markdown-body .token.url {
+  @apply text-primary;
+}
+
+/* Loading state styling */
+@keyframes markdown-skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.markdown-body.loading {
+  @apply opacity-70;
+}
+
+.markdown-body.loading * {
+  @apply animate-pulse;
+}
