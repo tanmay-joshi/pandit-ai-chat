@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { title = "New Chat", agentId, kundaliId } = body;
+    const { title = "New Consultation", agentId, kundaliId } = body;
 
     // Validate required fields
     if (!kundaliId) {
@@ -65,8 +65,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify that the kundali belongs to the user
+    let kundali;
     if (kundaliId) {
-      const kundali = await prisma.kundali.findUnique({
+      kundali = await prisma.kundali.findUnique({
         where: { id: kundaliId },
       });
 
@@ -85,10 +86,25 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Get agent information if an agent ID was provided
+    let agent;
+    if (agentId) {
+      agent = await prisma.agent.findUnique({
+        where: { id: agentId },
+      });
+    }
+
+    // Create a more descriptive title that includes Pandit and Kundali names
+    const chatTitle = agent && kundali
+      ? `${agent.name} consultation for ${kundali.fullName}`
+      : kundali 
+        ? `Consultation for ${kundali.fullName}` 
+        : title;
+
     // Create new chat with the selected agent and kundali
     const newChat = await prisma.chat.create({
       data: {
-        title,
+        title: chatTitle,
         userId: user.id,
         agentId: agentId || null,
         kundaliId: kundaliId,

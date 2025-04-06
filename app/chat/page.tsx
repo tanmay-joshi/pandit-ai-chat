@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import WalletDisplay from "@/components/WalletDisplay";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 type Agent = {
   id: string;
@@ -70,10 +70,6 @@ export default function ChatPage() {
     <div className="container mx-auto p-6">
       <h1 className="mb-4 text-3xl font-bold">Your Conversations</h1>
       
-      <div className="mb-6">
-        <WalletDisplay />
-      </div>
-      
       <div className="flex items-center justify-between mb-6">
         <Link href="/chat/new">
           <Button className="flex items-center gap-2">
@@ -122,7 +118,7 @@ export default function ChatPage() {
                   </div>
                 )}
                 <p className="text-sm text-gray-500">
-                  {new Date(chat.updatedAt).toLocaleString()}
+                  {formatDate(chat.updatedAt)}
                 </p>
               </div>
             </Link>
