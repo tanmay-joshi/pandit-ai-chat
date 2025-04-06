@@ -54,24 +54,48 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { title, agentId } = body;
+    const { title = "New Chat", agentId, kundaliId } = body;
 
-    // If agentId is provided, verify that the agent exists
-    if (agentId) {
-      const agent = await prisma.agent.findUnique({
-        where: { id: agentId },
+    // Validate required fields
+    if (!kundaliId) {
+      return NextResponse.json(
+        { error: "Kundali selection is required" },
+        { status: 400 }
+      );
+    }
+
+    // Verify that the kundali belongs to the user
+    if (kundaliId) {
+      const kundali = await prisma.kundali.findUnique({
+        where: { id: kundaliId },
       });
 
-      if (!agent) {
-        return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+      if (!kundali) {
+        return NextResponse.json(
+          { error: "Selected Kundali not found" },
+          { status: 404 }
+        );
+      }
+
+      if (kundali.userId !== user.id) {
+        return NextResponse.json(
+          { error: "Unauthorized to use this Kundali" },
+          { status: 403 }
+        );
       }
     }
 
+    // Create new chat with the selected agent and kundali
     const newChat = await prisma.chat.create({
       data: {
-        title: title || "New Chat",
+        title,
         userId: user.id,
         agentId: agentId || null,
+        kundaliId: kundaliId,
+      },
+      include: {
+        agent: true,
+        kundali: true,
       },
     });
 
