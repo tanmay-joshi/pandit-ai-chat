@@ -107,7 +107,7 @@ export default function ChatPageClient({ id }: { id: string }) {
       // Create initial chat state
       setChat({
         id: "new",
-        title: "New Consultation",
+        title: "New Pandit AI Consultation",
         messages: initialMessages,
       });
       
@@ -350,13 +350,22 @@ export default function ChatPageClient({ id }: { id: string }) {
     // Create chat
     try {
       setIsCreatingChat(true);
+      
+      // Get the selected agent
+      const selectedAgent = agents.find(a => a.id === selectedAgentId);
+      
+      // Create a descriptive title
+      const chatTitle = selectedAgent 
+        ? `${selectedAgent.name} consultation for ${kundali.fullName}`
+        : `Consultation for ${kundali.fullName}`;
+      
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ 
-          title: "New Chat", 
+          title: chatTitle, 
           agentId: selectedAgentId,
           kundaliId: kundali.id
         }),
@@ -375,6 +384,7 @@ export default function ChatPageClient({ id }: { id: string }) {
         setChat({
           ...chat,
           id: newChat.id,
+          title: chatTitle,
           messages: [
             ...chat.messages,
             {
@@ -468,6 +478,37 @@ export default function ChatPageClient({ id }: { id: string }) {
         messages: [...prev.messages, optimisticUserMsg, optimisticAiMsg] 
       } : prev
     );
+
+    // Check if this is the first user message and update the title if needed
+    // Only do this for relatively new chats that still have generic titles
+    if (chat && chat.messages.length <= 3 && 
+        (chat.title === "New Pandit AI Consultation" || 
+         chat.title.startsWith("Consultation for") || 
+         chat.title.includes("consultation for"))) {
+      // Create a more specific title from the user's first question
+      let updatedTitle = userMessage;
+      // Trim to reasonable length (50 chars) and add ellipsis if needed
+      if (updatedTitle.length > 50) {
+        updatedTitle = updatedTitle.substring(0, 47) + "...";
+      }
+      
+      // Update chat title locally
+      setChat(prev => prev ? { ...prev, title: updatedTitle } : prev);
+      
+      // Also update the title in the database
+      try {
+        await fetch(`/api/chat/${targetId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ title: updatedTitle }),
+        });
+      } catch (error) {
+        console.error("Failed to update chat title:", error);
+        // Non-critical error, so just log it and continue
+      }
+    }
 
     try {
       console.log("Sending message to API...");
