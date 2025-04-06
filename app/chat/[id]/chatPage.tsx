@@ -401,6 +401,14 @@ export default function ChatPageClient({ id }: { id: string }) {
       
       setStep(SelectionStep.Ready);
       
+      // Dispatch custom event for sidebar to refresh chats
+      window.dispatchEvent(new CustomEvent('chat-created', { 
+        detail: { 
+          id: newChat.id,
+          title: chatTitle
+        }
+      }));
+      
       // Update the URL without refreshing the page
       if (isNewChat) {
         router.replace(`/chat/${newChat.id}`, { scroll: false });
@@ -504,6 +512,14 @@ export default function ChatPageClient({ id }: { id: string }) {
           },
           body: JSON.stringify({ title: updatedTitle }),
         });
+
+        // Dispatch custom event for sidebar to update chat title
+        window.dispatchEvent(new CustomEvent('chat-updated', { 
+          detail: { 
+            id: targetId,
+            title: updatedTitle
+          }
+        }));
       } catch (error) {
         console.error("Failed to update chat title:", error);
         // Non-critical error, so just log it and continue
