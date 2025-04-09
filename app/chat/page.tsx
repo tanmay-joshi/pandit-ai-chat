@@ -28,7 +28,7 @@ type Chat = {
   title: string;
   updatedAt: string;
   agent: Agent | null;
-  kundali: Kundali | null;
+  kundalis: Kundali[] | null;
 };
 
 export default function ChatPage() {
@@ -114,9 +114,11 @@ export default function ChatPage() {
                     <span className="text-sm text-blue-700">{chat.agent.name}</span>
                   </div>
                 )}
-                {chat.kundali && (
+                {chat.kundalis && chat.kundalis.length > 0 && (
                   <div className="text-xs text-gray-600 mb-2">
-                    Kundali: {chat.kundali.fullName}
+                    {chat.kundalis.length === 1 
+                      ? `Kundali: ${chat.kundalis[0].fullName}`
+                      : `Kundalis: ${chat.kundalis.length} charts`}
                   </div>
                 )}
                 <p className="text-sm text-gray-500">

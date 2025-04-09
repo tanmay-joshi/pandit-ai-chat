@@ -65,17 +65,16 @@ model VerificationToken {
 
 // Application Models
 model Chat {
-  id        String    @id @default(cuid())
+  id        String         @id @default(cuid())
   title     String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
   userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages  Message[]
-  agentId   String?   // Optional to maintain backward compatibility
-  agent     Agent?    @relation(fields: [agentId], references: [id])
-  kundaliId String?   // Link to Kundali
-  kundali   Kundali?  @relation(fields: [kundaliId], references: [id])
+  agentId   String?        // Optional to maintain backward compatibility
+  agent     Agent?         @relation(fields: [agentId], references: [id])
+  kundalis  ChatKundali[]  // Many-to-many relation with kundalis
 }
 
 model Message {
@@ -103,6 +102,7 @@ model Agent {
   isActive      Boolean  @default(true)
   messageCost   Int      @default(10) // Cost in credits per message for this agent
   tags          String?  // Comma-separated tags like "basic", "experienced", "expert"
+  kundaliLimit  Int      @default(1)  // Number of kundalis this agent can consume (default: 1)
   chats         Chat[]
 }
 
@@ -128,15 +128,27 @@ model Transaction {
   createdAt   DateTime @default(now())
 }
 
+// Junction table for Chat and Kundali (many-to-many)
+model ChatKundali {
+  id        String   @id @default(cuid())
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  kundaliId String
+  kundali   Kundali  @relation(fields: [kundaliId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([chatId, kundaliId])
+}
+
 // Kundali model for birth information
 model Kundali {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  fullName    String   // Full name of the person
-  dateOfBirth DateTime // Date and time of birth
-  placeOfBirth String  // Place of birth
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  chats       Chat[]   // Chats that used this Kundali
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName    String        // Full name of the person
+  dateOfBirth DateTime      // Date and time of birth
+  placeOfBirth String       // Place of birth
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  chats       ChatKundali[] // Many-to-many relation with chats
 }

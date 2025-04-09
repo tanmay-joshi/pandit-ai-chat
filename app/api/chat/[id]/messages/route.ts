@@ -17,6 +17,16 @@ const DEFAULT_SYSTEM_PROMPT = `You are a helpful, knowledgeable, and friendly AI
 // Default cost per message in credits (will be overridden by agent's messageCost if available)
 const DEFAULT_MESSAGE_COST = 10;
 
+type Kundali = {
+  id: string;
+  fullName: string;
+  dateOfBirth: Date;
+  placeOfBirth: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 // Create the AI chain with the specified system prompt
 const createAIChain = (systemPrompt: string) => {
   // Initialize the OpenAI model with streaming
@@ -107,8 +117,7 @@ export async function POST(
     const chat = await prisma.chat.findUnique({
       where: { id: chatId },
       include: { 
-        agent: true,
-        kundali: true 
+        agent: true
       }
     });
 
@@ -119,6 +128,13 @@ export async function POST(
     if (chat.userId !== user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
+    
+    // Fetch associated kundalis for this chat
+    const chatKundalis = await prisma.$queryRaw<Kundali[]>`
+      SELECT k.* FROM "Kundali" k
+      JOIN "ChatKundali" ck ON k.id = ck.kundaliId
+      WHERE ck.chatId = ${chatId}
+    `;
 
     const { content } = await req.json();
 
@@ -149,17 +165,25 @@ export async function POST(
       console.log(`Using agent ${chat.agent.name} with custom system prompt`);
     }
 
-    // If kundali is present, add it to the system prompt
-    if (chat.kundali) {
-      const kundaliInfo = `
-KUNDALI INFORMATION:
-Full Name: ${chat.kundali.fullName}
-Date of Birth: ${new Date(chat.kundali.dateOfBirth).toLocaleString()}
-Place of Birth: ${chat.kundali.placeOfBirth}
-
-Use this Kundali information to provide more personalized and relevant astrological guidance. 
-Make references to this information when appropriate in your responses.
-`;
+    // If kundalis are present, add them to the system prompt
+    if (chatKundalis && chatKundalis.length > 0) {
+      let kundaliInfo = `\nKUNDALI INFORMATION:\n`;
+      
+      // Add each kundali to the prompt
+      chatKundalis.forEach((kundali, index) => {
+        kundaliInfo += `\nKUNDALI ${index + 1}:\n`;
+        kundaliInfo += `Full Name: ${kundali.fullName}\n`;
+        kundaliInfo += `Date of Birth: ${new Date(kundali.dateOfBirth).toLocaleString()}\n`;
+        kundaliInfo += `Place of Birth: ${kundali.placeOfBirth}\n`;
+      });
+      
+      kundaliInfo += `\nUse this Kundali information to provide more personalized and relevant astrological guidance.`;
+      
+      if (chatKundalis.length > 1) {
+        kundaliInfo += `\nYou have been provided with multiple birth charts. Please analyze and compare these charts as appropriate for the user's questions.`;
+      }
+      
+      kundaliInfo += `\nMake references to this information when appropriate in your responses.\n`;
       
       systemPrompt = `${systemPrompt}\n\n${kundaliInfo}`;
     }
@@ -169,7 +193,9 @@ Make references to this information when appropriate in your responses.
 
     // Check if user has enough credits for a message (AI response)
     // Use agent-specific message cost if available, otherwise default
-    const messageCost = chat.agent?.messageCost || DEFAULT_MESSAGE_COST;
+    const messageCost = chat.agent && 'messageCost' in chat.agent 
+      ? (chat.agent as any).messageCost 
+      : DEFAULT_MESSAGE_COST;
     
     if (user.wallet.balance < messageCost) {
       return NextResponse.json({ 

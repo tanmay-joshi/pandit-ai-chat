@@ -9,6 +9,7 @@ type Agent = {
   systemPrompt: string;
   messageCost: number;
   tags?: string | null;
+  kundaliLimit: number;
 };
 
 interface AgentSelectorProps {
@@ -104,6 +105,9 @@ export default function AgentSelector({ onSelect, selectedAgentId }: AgentSelect
           <p className="text-sm text-gray-600 mb-2">{agent.description}</p>
           <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
             <span className="text-sm font-medium text-gray-900">{agent.messageCost} credits per message</span>
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            Can analyze up to {agent.kundaliLimit} {agent.kundaliLimit === 1 ? 'kundali' : 'kundalis'}
           </div>
         </div>
       ))}

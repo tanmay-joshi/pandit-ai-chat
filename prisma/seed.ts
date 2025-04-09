@@ -11,6 +11,7 @@ const pandits = [
     isActive: true,
     messageCost: 15,
     tags: 'experienced',
+    kundaliLimit: 2,
   },
   {
     name: 'Tech Guru',
@@ -20,6 +21,7 @@ const pandits = [
     isActive: true,
     messageCost: 20,
     tags: 'expert',
+    kundaliLimit: 3,
   },
   {
     name: 'Creative Muse',
@@ -29,6 +31,7 @@ const pandits = [
     isActive: true,
     messageCost: 10,
     tags: 'basic',
+    kundaliLimit: 1,
   },
   {
     name: "Pandit Prem",
@@ -38,6 +41,7 @@ const pandits = [
     isActive: true,
     messageCost: 15,
     tags: 'experienced',
+    kundaliLimit: 2,
   },
   {
     name: "Pandit Vyapar",
@@ -47,6 +51,7 @@ const pandits = [
     isActive: true,
     messageCost: 20,
     tags: 'expert',
+    kundaliLimit: 3,
   },
   {
     name: "Pandit Arogya",
@@ -56,6 +61,7 @@ const pandits = [
     isActive: true,
     messageCost: 15, 
     tags: 'experienced',
+    kundaliLimit: 2,
   },
   {
     name: "Pandit Vidya",
@@ -65,6 +71,7 @@ const pandits = [
     isActive: true,
     messageCost: 10,
     tags: 'basic',
+    kundaliLimit: 1,
   }
 ];
 
@@ -88,6 +95,7 @@ async function main() {
             isActive: pandit.isActive,
             messageCost: pandit.messageCost,
             tags: pandit.tags,
+            kundaliLimit: pandit.kundaliLimit,
           },
         });
         console.log(`✓ Updated pandit: ${pandit.name}`);

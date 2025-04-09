@@ -25,6 +25,7 @@ type Agent = {
   systemPrompt: string;
   messageCost: number;
   tags?: string | null;
+  kundaliLimit: number;
 };
 
 type Kundali = {
@@ -39,7 +40,7 @@ type Chat = {
   title: string;
   messages: Message[];
   agent?: Agent | null;
-  kundali?: Kundali | null;
+  kundalis?: Kundali[] | null;
 };
 
 enum SelectionStep {
@@ -65,9 +66,10 @@ export default function ChatPageClient({ id }: { id: string }) {
   const [kundalis, setKundalis] = useState<Kundali[]>([]);
   const [step, setStep] = useState<SelectionStep>(SelectionStep.Initial);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [selectedKundaliId, setSelectedKundaliId] = useState<string | null>(null);
+  const [selectedKundaliIds, setSelectedKundaliIds] = useState<string[]>([]);
   const [chatId, setChatId] = useState<string | null>(null);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -232,6 +234,7 @@ export default function ChatPageClient({ id }: { id: string }) {
   const handleAgentSelect = async (agent: Agent) => {
     console.log("Agent selected:", agent.name, agent.id);
     setSelectedAgentId(agent.id);
+    setSelectedAgent(agent);
     
     // Add user selection message
     const userSelectMessage: Message = {
@@ -283,7 +286,7 @@ export default function ChatPageClient({ id }: { id: string }) {
                 ...prev.messages,
                 {
                   id: "kundali-prompt",
-                  content: "Great! Now, please select a Kundali (birth chart) for your consultation:",
+                  content: `Great! Now, please select ${agent.kundaliLimit > 1 ? 'up to ' + agent.kundaliLimit + ' kundalis' : 'a kundali'} for your consultation:`,
                   role: "assistant" as const,
                   createdAt: new Date().toISOString(),
                   hasOptions: true
@@ -315,19 +318,45 @@ export default function ChatPageClient({ id }: { id: string }) {
     }
   };
 
-  // Handle kundali selection
-  const handleKundaliSelect = async (kundali: Kundali) => {
-    setSelectedKundaliId(kundali.id);
+  // Toggle kundali selection
+  const toggleKundaliSelection = (kundali: Kundali) => {
+    if (!selectedAgent) return;
     
+    const isSelected = selectedKundaliIds.includes(kundali.id);
+    
+    if (isSelected) {
+      // Remove from selection
+      setSelectedKundaliIds(prev => prev.filter(id => id !== kundali.id));
+    } else {
+      // Add to selection if limit not reached
+      if (selectedKundaliIds.length < selectedAgent.kundaliLimit) {
+        setSelectedKundaliIds(prev => [...prev, kundali.id]);
+      }
+    }
+  };
+
+  // Handle kundali selection confirmation
+  const confirmKundaliSelection = async () => {
+    if (selectedKundaliIds.length === 0) {
+      setError("Please select at least one kundali to continue");
+      return;
+    }
+    
+    // Get selected kundalis
+    const selectedKundalisList = kundalis.filter(k => selectedKundaliIds.includes(k.id));
+    
+    // Add selection message to chat
     if (chat) {
-      // Add selection message to chat
+      // Create message listing selected kundalis
+      const kundaliNames = selectedKundalisList.map(k => k.fullName).join(", ");
+      
       setChat({
         ...chat,
         messages: [
           ...chat.messages,
           {
             id: `user-kundali-${Date.now()}`,
-            content: `I'll use the birth chart for ${kundali.fullName}`,
+            content: `I'll use the birth charts for: ${kundaliNames}`,
             role: "user" as const,
             createdAt: new Date().toISOString(),
           }
@@ -353,13 +382,10 @@ export default function ChatPageClient({ id }: { id: string }) {
     try {
       setIsCreatingChat(true);
       
-      // Get the selected agent
-      const selectedAgent = agents.find(a => a.id === selectedAgentId);
-      
       // Create a descriptive title
       const chatTitle = selectedAgent 
-        ? `${selectedAgent.name} consultation for ${kundali.fullName}`
-        : `Consultation for ${kundali.fullName}`;
+        ? `${selectedAgent.name} consultation${selectedKundalisList.length > 1 ? ' (multiple charts)' : ` for ${selectedKundalisList[0].fullName}`}`
+        : `Consultation${selectedKundalisList.length > 1 ? ' (multiple charts)' : ` for ${selectedKundalisList[0].fullName}`}`;
       
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -369,7 +395,7 @@ export default function ChatPageClient({ id }: { id: string }) {
         body: JSON.stringify({ 
           title: chatTitle, 
           agentId: selectedAgentId,
-          kundaliId: kundali.id
+          kundaliIds: selectedKundaliIds
         }),
       });
 
@@ -397,11 +423,9 @@ export default function ChatPageClient({ id }: { id: string }) {
             }
           ],
           agent: agents.find(a => a.id === selectedAgentId) || null,
-          kundali: kundali
+          kundalis: selectedKundalisList
         });
       }
-      
-      setStep(SelectionStep.Ready);
       
       // Dispatch custom event for sidebar to refresh chats
       window.dispatchEvent(new CustomEvent('chat-created', { 
@@ -687,19 +711,26 @@ export default function ChatPageClient({ id }: { id: string }) {
       kundalisData: kundalis 
     });
     
-    if (step !== SelectionStep.SelectKundali || !kundalis || kundalis.length === 0) {
+    if (step !== SelectionStep.SelectKundali || !kundalis || kundalis.length === 0 || !selectedAgent) {
       console.log("Not rendering kundali options because conditions not met");
       return null;
     }
     
     return (
       <div className="flex flex-col gap-2 mt-2">
+        <p className="text-sm text-blue-600 mb-1">
+          {selectedAgent.kundaliLimit > 1 
+            ? `Select up to ${selectedAgent.kundaliLimit} kundalis. Selected: ${selectedKundaliIds.length}/${selectedAgent.kundaliLimit}`
+            : 'Select 1 kundali:'}
+        </p>
+        
         {kundalis.map((kundali) => (
           <Button
             key={kundali.id}
-            variant="outline"
-            className="justify-start text-left"
-            onClick={() => handleKundaliSelect(kundali)}
+            variant={selectedKundaliIds.includes(kundali.id) ? "default" : "outline"}
+            className={`justify-start text-left ${selectedKundaliIds.includes(kundali.id) ? 'bg-blue-600' : ''}`}
+            onClick={() => toggleKundaliSelection(kundali)}
+            disabled={!selectedKundaliIds.includes(kundali.id) && selectedKundaliIds.length >= selectedAgent.kundaliLimit}
           >
             <div>
               <div className="font-medium">{kundali.fullName}</div>
@@ -709,13 +740,42 @@ export default function ChatPageClient({ id }: { id: string }) {
             </div>
           </Button>
         ))}
-        <Button 
-          variant="link" 
-          className="self-start mt-1"
-          onClick={() => router.push("/kundali")}
-        >
-          + Add a new Kundali
-        </Button>
+        
+        <div className="flex gap-2 mt-2">
+          <Button 
+            variant="link" 
+            className="self-start"
+            onClick={() => router.push("/kundali")}
+          >
+            + Add a new Kundali
+          </Button>
+          
+          <Button
+            variant="default"
+            className="ml-auto"
+            disabled={selectedKundaliIds.length === 0}
+            onClick={confirmKundaliSelection}
+          >
+            Continue with selected
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  // Display multiple kundalis in chat header
+  const renderKundalisList = () => {
+    if (!chat || !chat.kundalis || chat.kundalis.length === 0) return null;
+    
+    return (
+      <div className="mt-4 space-y-2">
+        {chat.kundalis.map((kundali, index) => (
+          <div key={index} className="border-t first:border-t-0 pt-2 first:pt-0">
+            <p className="font-medium text-sm">{kundali.fullName}</p>
+            <p className="text-xs text-gray-600">Born: {new Date(kundali.dateOfBirth).toLocaleString()}</p>
+            <p className="text-xs text-gray-600">Place: {kundali.placeOfBirth}</p>
+          </div>
+        ))}
       </div>
     );
   };
@@ -766,12 +826,12 @@ export default function ChatPageClient({ id }: { id: string }) {
                 <span className="text-blue-700">{chat.agent.name}</span>
               </div>
             )}
-            {chat.kundali && (
+            {chat.kundalis && chat.kundalis.length > 0 && (
               <div className="flex items-center ml-3 px-2 py-1 bg-purple-50 rounded-full text-sm">
                 <div className="w-5 h-5 mr-1 rounded-full bg-purple-200 flex items-center justify-center">
                   <span className="text-purple-700 text-xs font-bold">K</span>
                 </div>
-                <span className="text-purple-700">{chat.kundali.fullName}</span>
+                <span className="text-purple-700">{chat.kundalis.length} Kundalis</span>
               </div>
             )}
           </div>
@@ -827,14 +887,10 @@ export default function ChatPageClient({ id }: { id: string }) {
                 {chat.agent.description}
               </p>
             )}
-            {chat.kundali && (
+            {chat.kundalis && chat.kundalis.length > 0 && (
               <div className="mb-6 max-w-md bg-purple-50 p-4 rounded-lg">
                 <h3 className="text-center text-purple-700 font-medium mb-2">Kundali Information</h3>
-                <p className="text-sm text-center text-gray-700">
-                  <span className="font-medium">Name:</span> {chat.kundali.fullName}<br />
-                  <span className="font-medium">Born:</span> {new Date(chat.kundali.dateOfBirth).toLocaleString()}<br />
-                  <span className="font-medium">Place:</span> {chat.kundali.placeOfBirth}
-                </p>
+                {renderKundalisList()}
               </div>
             )}
             <p className="text-center text-sm text-gray-500">
