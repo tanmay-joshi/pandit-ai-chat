@@ -12,10 +12,27 @@ import {
 } from "@langchain/core/runnables";
 
 // The default system prompt if no agent is specified
-const DEFAULT_SYSTEM_PROMPT = `You are a helpful, knowledgeable, and friendly AI assistant. Answer user questions accurately and provide useful information.`;
+const DEFAULT_SYSTEM_PROMPT = `You are a helpful, knowledgeable, and friendly AI assistant. Answer user questions accurately and provide useful information.
 
-// Cost per message in credits
-const MESSAGE_COST = 10;
+At the end of each response, always provide three follow-up questions that the user might want to ask next, using this exact format at the end of your message:
+
+SUGGESTED QUESTIONS:
+1. [First suggested follow-up question]
+2. [Second suggested follow-up question]
+3. [Third suggested follow-up question]`;
+
+// Default cost per message in credits (will be overridden by agent's messageCost if available)
+const DEFAULT_MESSAGE_COST = 10;
+
+type Kundali = {
+  id: string;
+  fullName: string;
+  dateOfBirth: Date;
+  placeOfBirth: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 // Create the AI chain with the specified system prompt
 const createAIChain = (systemPrompt: string) => {
@@ -103,21 +120,11 @@ export async function POST(
       user.wallet = updatedUser.wallet;
     }
     
-    // Check if user has enough credits for a message (only AI response now)
-    if (user.wallet.balance < MESSAGE_COST) {
-      return NextResponse.json({ 
-        error: "Insufficient credits", 
-        balance: user.wallet.balance,
-        required: MESSAGE_COST
-      }, { status: 402 }); // 402 Payment Required
-    }
-
     // Get the chat along with its agent if one is associated
     const chat = await prisma.chat.findUnique({
       where: { id: chatId },
       include: { 
-        agent: true,
-        kundali: true 
+        agent: true
       }
     });
 
@@ -128,6 +135,13 @@ export async function POST(
     if (chat.userId !== user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
+    
+    // Fetch associated kundalis for this chat
+    const chatKundalis = await prisma.$queryRaw<Kundali[]>`
+      SELECT k.* FROM "Kundali" k
+      JOIN "ChatKundali" ck ON k.id = ck.kundaliId
+      WHERE ck.chatId = ${chatId}
+    `;
 
     const { content } = await req.json();
 
@@ -158,17 +172,25 @@ export async function POST(
       console.log(`Using agent ${chat.agent.name} with custom system prompt`);
     }
 
-    // If kundali is present, add it to the system prompt
-    if (chat.kundali) {
-      const kundaliInfo = `
-KUNDALI INFORMATION:
-Full Name: ${chat.kundali.fullName}
-Date of Birth: ${new Date(chat.kundali.dateOfBirth).toLocaleString()}
-Place of Birth: ${chat.kundali.placeOfBirth}
-
-Use this Kundali information to provide more personalized and relevant astrological guidance. 
-Make references to this information when appropriate in your responses.
-`;
+    // If kundalis are present, add them to the system prompt
+    if (chatKundalis && chatKundalis.length > 0) {
+      let kundaliInfo = `\nKUNDALI INFORMATION:\n`;
+      
+      // Add each kundali to the prompt
+      chatKundalis.forEach((kundali, index) => {
+        kundaliInfo += `\nKUNDALI ${index + 1}:\n`;
+        kundaliInfo += `Full Name: ${kundali.fullName}\n`;
+        kundaliInfo += `Date of Birth: ${new Date(kundali.dateOfBirth).toLocaleString()}\n`;
+        kundaliInfo += `Place of Birth: ${kundali.placeOfBirth}\n`;
+      });
+      
+      kundaliInfo += `\nUse this Kundali information to provide more personalized and relevant astrological guidance.`;
+      
+      if (chatKundalis.length > 1) {
+        kundaliInfo += `\nYou have been provided with multiple birth charts. Please analyze and compare these charts as appropriate for the user's questions.`;
+      }
+      
+      kundaliInfo += `\nMake references to this information when appropriate in your responses.\n`;
       
       systemPrompt = `${systemPrompt}\n\n${kundaliInfo}`;
     }
@@ -176,16 +198,30 @@ Make references to this information when appropriate in your responses.
     // Initialize the AI chain with the appropriate system prompt
     const aiChain = createAIChain(systemPrompt);
 
+    // Check if user has enough credits for a message (AI response)
+    // Use agent-specific message cost if available, otherwise default
+    const messageCost = chat.agent && 'messageCost' in chat.agent 
+      ? (chat.agent as any).messageCost 
+      : DEFAULT_MESSAGE_COST;
+    
+    if (user.wallet.balance < messageCost) {
+      return NextResponse.json({ 
+        error: "Insufficient credits", 
+        balance: user.wallet.balance,
+        required: messageCost
+      }, { status: 402 }); // 402 Payment Required
+    }
+
     // Deduct credits for AI message
     await prisma.wallet.update({
       where: { id: user.wallet.id },
       data: {
-        balance: { decrement: MESSAGE_COST },
+        balance: { decrement: messageCost },
         transactions: {
           create: {
-            amount: -MESSAGE_COST,
+            amount: -messageCost,
             type: "message_fee",
-            description: "AI response fee"
+            description: `AI response fee (${chat.agent?.name || 'Default agent'})`
           }
         }
       }
@@ -198,7 +234,7 @@ Make references to this information when appropriate in your responses.
         role: "assistant",
         chatId,
         userId: user.id,
-        cost: MESSAGE_COST,
+        cost: messageCost,
         paid: true
       }
     });
@@ -282,10 +318,10 @@ Make references to this information when appropriate in your responses.
       await prisma.wallet.update({
         where: { id: user.wallet.id },
         data: {
-          balance: { increment: MESSAGE_COST },
+          balance: { increment: messageCost },
           transactions: {
             create: {
-              amount: MESSAGE_COST,
+              amount: messageCost,
               type: "refund",
               description: "Refund for failed AI response"
             }

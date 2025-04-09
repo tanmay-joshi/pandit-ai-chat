@@ -7,6 +7,9 @@ type Agent = {
   description: string;
   avatar: string | null;
   systemPrompt: string;
+  messageCost: number;
+  tags?: string | null;
+  kundaliLimit: number;
 };
 
 interface AgentSelectorProps {
@@ -51,6 +54,20 @@ export default function AgentSelector({ onSelect, selectedAgentId }: AgentSelect
     return <div className="text-center py-4">No agents available</div>;
   }
 
+  // Helper function to get a color based on tag
+  const getTagColor = (tag: string) => {
+    switch (tag.toLowerCase().trim()) {
+      case 'basic':
+        return 'bg-blue-100 text-blue-800';
+      case 'experienced':
+        return 'bg-purple-100 text-purple-800';
+      case 'expert':
+        return 'bg-amber-100 text-amber-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
       {agents.map((agent) => (
@@ -76,9 +93,22 @@ export default function AgentSelector({ onSelect, selectedAgentId }: AgentSelect
                 <span className="text-gray-500 font-bold">{agent.name.charAt(0)}</span>
               </div>
             )}
-            <h3 className="font-medium">{agent.name}</h3>
+            <div>
+              <h3 className="font-medium">{agent.name}</h3>
+              {agent.tags && (
+                <span className={`text-xs px-2 py-0.5 rounded-full ${getTagColor(agent.tags)}`}>
+                  {agent.tags}
+                </span>
+              )}
+            </div>
           </div>
-          <p className="text-sm text-gray-600">{agent.description}</p>
+          <p className="text-sm text-gray-600 mb-2">{agent.description}</p>
+          <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
+            <span className="text-sm font-medium text-gray-900">{agent.messageCost} credits per message</span>
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            Can analyze up to {agent.kundaliLimit} {agent.kundaliLimit === 1 ? 'kundali' : 'kundalis'}
+          </div>
         </div>
       ))}
     </div>

@@ -97,7 +97,7 @@ export default function WalletDisplay() {
       </div>
 
       <div className="mt-4 text-sm text-gray-600">
-        <p>Each AI response costs 10 credits. Your messages are free.</p>
+        <p>AI responses cost between 10-20 credits depending on the Pandit. Your messages are free.</p>
       </div>
     </div>
   );

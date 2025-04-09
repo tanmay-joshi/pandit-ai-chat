@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     // For now, we'll allow any authenticated user to create agents
 
     const body = await req.json();
-    const { name, description, avatar, systemPrompt } = body;
+    const { name, description, avatar, systemPrompt, messageCost = 10, tags } = body;
 
     if (!name || !systemPrompt) {
       return NextResponse.json(
@@ -57,6 +57,8 @@ export async function POST(req: NextRequest) {
         avatar,
         systemPrompt,
         isActive: true,
+        messageCost,
+        tags,
       },
     });
 
