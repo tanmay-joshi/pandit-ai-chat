@@ -78,16 +78,17 @@ model Chat {
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  content   String
-  role      String   // "user" or "assistant"
-  createdAt DateTime @default(now())
-  chatId    String
-  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cost      Int      @default(10) // Cost of the message (default: 10 credits)
-  paid      Boolean  @default(false) // Track if the message was paid for
+  id                 String   @id @default(cuid())
+  content            String
+  role               String   // "user" or "assistant"
+  createdAt          DateTime @default(now())
+  chatId             String
+  chat               Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cost               Int      @default(10) // Cost of the message (default: 10 credits)
+  paid               Boolean  @default(false) // Track if the message was paid for
+  suggestedQuestions String?  // JSON string array of suggested follow-up questions
 }
 
 // New Agent model for different AI personalities

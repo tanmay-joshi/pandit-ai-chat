@@ -12,7 +12,14 @@ import {
 } from "@langchain/core/runnables";
 
 // The default system prompt if no agent is specified
-const DEFAULT_SYSTEM_PROMPT = `You are a helpful, knowledgeable, and friendly AI assistant. Answer user questions accurately and provide useful information.`;
+const DEFAULT_SYSTEM_PROMPT = `You are a helpful, knowledgeable, and friendly AI assistant. Answer user questions accurately and provide useful information.
+
+At the end of each response, always provide three follow-up questions that the user might want to ask next, using this exact format at the end of your message:
+
+SUGGESTED QUESTIONS:
+1. [First suggested follow-up question]
+2. [Second suggested follow-up question]
+3. [Third suggested follow-up question]`;
 
 // Default cost per message in credits (will be overridden by agent's messageCost if available)
 const DEFAULT_MESSAGE_COST = 10;

@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import SuggestedQuestions from "@/components/SuggestedQuestions";
 import { Send } from "lucide-react";
 
 type Message = {
@@ -15,6 +16,7 @@ type Message = {
   role: "user" | "assistant"; 
   createdAt: string;
   hasOptions?: boolean;
+  suggestedQuestions?: string[];
 };
 
 type Agent = {
@@ -70,6 +72,8 @@ export default function ChatPageClient({ id }: { id: string }) {
   const [chatId, setChatId] = useState<string | null>(null);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const [partialResponse, setPartialResponse] = useState("");
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -133,6 +137,25 @@ export default function ChatPageClient({ id }: { id: string }) {
         throw new Error("Chat not found");
       }
       const data = await response.json();
+      
+      // Process messages to parse suggestedQuestions if needed
+      if (data.messages) {
+        data.messages = data.messages.map((msg: any) => {
+          if (msg.suggestedQuestions && typeof msg.suggestedQuestions === 'string') {
+            try {
+              return {
+                ...msg,
+                suggestedQuestions: JSON.parse(msg.suggestedQuestions)
+              };
+            } catch (e) {
+              console.error("Error parsing suggestedQuestions:", e);
+              return msg;
+            }
+          }
+          return msg;
+        });
+      }
+      
       setChat(data);
       setStep(SelectionStep.Chatting);
       setLoading(false);
@@ -468,6 +491,47 @@ export default function ChatPageClient({ id }: { id: string }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat?.messages]);
 
+  // Extract suggested questions from the AI response
+  const extractSuggestedQuestions = (content: string): string[] => {
+    // Look for the suggested questions section
+    const match = content.match(/SUGGESTED QUESTIONS:[\s\n]*1\.[\s\n]*([^\n]+)[\s\n]*2\.[\s\n]*([^\n]+)[\s\n]*3\.[\s\n]*([^\n]+)/i);
+    
+    if (match && match.length >= 4) {
+      return [
+        match[1].trim(),
+        match[2].trim(),
+        match[3].trim()
+      ];
+    }
+    
+    return [];
+  };
+
+  // Process incoming stream chunks
+  const handleChunk = (chunk: string) => {
+    setPartialResponse((prev: string) => {
+      const newResponse = prev + chunk;
+      
+      // Only extract suggestions when we receive a chunk that might contain the end markers
+      if (chunk.includes("SUGGESTED QUESTIONS:") || chunk.includes("1.") || chunk.includes("2.") || chunk.includes("3.")) {
+        const extracted = extractSuggestedQuestions(newResponse);
+        if (extracted.length > 0) {
+          setSuggestedQuestions(extracted);
+        }
+      }
+      
+      return newResponse;
+    });
+  };
+
+  // Handle sending a suggested question
+  const sendSuggestedQuestion = (question: string) => {
+    setInput(question);
+    // Optionally auto-send:
+    // setInput("");
+    // sendMessage(new Event('submit') as any);
+  };
+
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !chat) return;
@@ -599,52 +663,80 @@ export default function ChatPageClient({ id }: { id: string }) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let receivedText = "";
+      setSuggestedQuestions([]);
+      setPartialResponse("");
       
-      // Process the stream chunks
-      while (true) {
-        const { done, value } = await reader.read();
+      try {
+        let done = false;
         
-        if (done) {
-          console.log("Stream completed");
-          break;
-        }
-        
-        // Decode the chunk and update the message content
-        const chunk = decoder.decode(value, { stream: true });
-        receivedText += chunk;
-        
-        // Update the chat state with the new content
-        setChat((prevChat) => {
-          if (!prevChat) return prevChat;
+        while (!done) {
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
           
-          return {
-            ...prevChat,
-            messages: prevChat.messages.map((msg) => {
-              if (msg.id === optimisticAiMsg.id || msg.id === aiMessageId) {
+          if (done) {
+            // We're done reading the stream
+            break;
+          }
+          
+          // Decode the chunk and append to received text
+          const chunk = decoder.decode(value, { stream: true });
+          receivedText += chunk;
+          
+          // Process the chunk for UI updates and extract suggestions
+          handleChunk(chunk);
+          
+          // Update the optimistic AI message in the UI
+          setChat(prev => {
+            if (!prev) return prev;
+            
+            // Find and update the optimistic message
+            const updatedMessages = prev.messages.map(m => {
+              if (m.id === optimisticAiMsg.id) {
                 return {
-                  ...msg,
-                  id: aiMessageId,
+                  ...m,
                   content: receivedText
                 };
               }
-              return msg;
-            })
-          };
-        });
+              return m;
+            });
+            
+            return {
+              ...prev,
+              messages: updatedMessages
+            };
+          });
+        }
+        
+        console.log("Stream complete, final response length:", receivedText.length);
+        
+        // Extract final suggested questions
+        const finalQuestions = extractSuggestedQuestions(receivedText);
+        if (finalQuestions.length > 0) {
+          setSuggestedQuestions(finalQuestions);
+        }
+        
+        // Update the message in the database with the complete response and questions
+        try {
+          await fetch(`/api/chat/${targetId}/messages/${aiMessageId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ 
+              content: receivedText,
+              suggestedQuestions: finalQuestions
+            }),
+          });
+          console.log("Saved complete AI response to database");
+        } catch (updateError) {
+          console.error("Failed to save complete response:", updateError);
+        }
+        
+      } catch (streamError) {
+        console.error("Error processing stream:", streamError);
+        setError("Error while reading the AI response stream");
       }
       
-      // Final update after streaming is complete
-      if (receivedText.length === 0) {
-        console.error("Received empty response from AI");
-        throw new Error("Received empty response from AI");
-      }
-      
-      // After first message is sent in a new chat, move to chatting state
-      if (step === SelectionStep.Ready) {
-        setStep(SelectionStep.Chatting);
-      }
-      
-      console.log("Streaming complete. Final response length:", receivedText.length);
     } catch (error) {
       console.error("Error sending message:", error);
       
@@ -779,6 +871,32 @@ export default function ChatPageClient({ id }: { id: string }) {
       </div>
     );
   };
+
+  // Extract and set suggestions from the latest AI message when messages change
+  useEffect(() => {
+    if (chat?.messages && chat.messages.length > 0) {
+      // Get the last message from the assistant
+      const assistantMessages = chat.messages.filter(m => m.role === "assistant");
+      
+      if (assistantMessages.length > 0) {
+        const lastMessage = assistantMessages[assistantMessages.length - 1];
+        
+        // First check if the message already has suggested questions
+        if (lastMessage.suggestedQuestions && lastMessage.suggestedQuestions.length > 0) {
+          setSuggestedQuestions(lastMessage.suggestedQuestions);
+        } else {
+          // Otherwise try to extract them from the content
+          const extractedQuestions = extractSuggestedQuestions(lastMessage.content);
+          if (extractedQuestions.length > 0) {
+            setSuggestedQuestions(extractedQuestions);
+          } else {
+            // No suggestions found
+            setSuggestedQuestions([]);
+          }
+        }
+      }
+    }
+  }, [chat?.messages]);
 
   if (status === "loading" || loading) {
     return (
@@ -967,36 +1085,43 @@ export default function ChatPageClient({ id }: { id: string }) {
       </div>
 
       {/* Input area */}
-      <div className="border-t border-gray-200 bg-white p-4">
-        <form onSubmit={sendMessage} className="flex">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={step === SelectionStep.Ready || step === SelectionStep.Chatting 
-              ? `Ask ${chat.agent ? chat.agent.name : 'anything'}...` 
-              : "Please complete the setup process first..."}
-            className="min-h-9 flex-1 resize-none rounded-l-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
-            disabled={sending || step !== SelectionStep.Ready && step !== SelectionStep.Chatting}
-          />
-          <Button
-            type="submit"
-            className="rounded-r-md"
-            disabled={sending || !input.trim() || (step !== SelectionStep.Ready && step !== SelectionStep.Chatting)}
-          >
-            <Send className="h-4 w-4" />
-            <span className="sr-only">Send</span>
-          </Button>
-        </form>
-        <div className="mt-2 text-xs text-gray-500">
-          {step !== SelectionStep.Ready && step !== SelectionStep.Chatting ? (
-            step === SelectionStep.Initial ? "Loading options..." : 
-            step === SelectionStep.SelectAgent ? "Please select a Pandit to continue" : 
-            "Please select a Kundali to continue"
-          ) : (
-            chat && chat.agent ? 
-            `Each AI response costs ${chat.agent.messageCost} credits. Your messages are free.` :
-            "Each AI response costs 10 credits. Your messages are free."
-          )}
+      <div className="border-t border-gray-200 bg-white">
+        <SuggestedQuestions 
+          questions={suggestedQuestions} 
+          onQuestionClick={sendSuggestedQuestion}
+          isLoading={sending} 
+        />
+        <div className="p-4">
+          <form onSubmit={sendMessage} className="flex">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={step === SelectionStep.Ready || step === SelectionStep.Chatting 
+                ? `Ask ${chat.agent ? chat.agent.name : 'anything'}...` 
+                : "Please complete the setup process first..."}
+              className="min-h-9 flex-1 resize-none rounded-l-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+              disabled={sending || step !== SelectionStep.Ready && step !== SelectionStep.Chatting}
+            />
+            <Button
+              type="submit"
+              className="rounded-r-md"
+              disabled={sending || !input.trim() || (step !== SelectionStep.Ready && step !== SelectionStep.Chatting)}
+            >
+              <Send className="h-4 w-4" />
+              <span className="sr-only">Send</span>
+            </Button>
+          </form>
+          <div className="mt-2 text-xs text-gray-500">
+            {step !== SelectionStep.Ready && step !== SelectionStep.Chatting ? (
+              step === SelectionStep.Initial ? "Loading options..." : 
+              step === SelectionStep.SelectAgent ? "Please select a Pandit to continue" : 
+              "Please select a Kundali to continue"
+            ) : (
+              chat && chat.agent ? 
+              `Each AI response costs ${chat.agent.messageCost} credits. Your messages are free.` :
+              "Each AI response costs 10 credits. Your messages are free."
+            )}
+          </div>
         </div>
       </div>
     </div>
