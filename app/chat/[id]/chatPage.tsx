@@ -11,8 +11,8 @@ import { Send } from "lucide-react";
 
 type Message = {
   id: string;
-  content: string | React.ReactNode;
-  role: "user" | "assistant" | "system";
+  content: string;
+  role: "user" | "assistant"; 
   createdAt: string;
   hasOptions?: boolean;
 };
@@ -23,6 +23,8 @@ type Agent = {
   description: string;
   avatar: string | null;
   systemPrompt: string;
+  messageCost: number;
+  tags?: string | null;
 };
 
 type Kundali = {
@@ -935,6 +937,8 @@ export default function ChatPageClient({ id }: { id: string }) {
             step === SelectionStep.SelectAgent ? "Please select a Pandit to continue" : 
             "Please select a Kundali to continue"
           ) : (
+            chat && chat.agent ? 
+            `Each AI response costs ${chat.agent.messageCost} credits. Your messages are free.` :
             "Each AI response costs 10 credits. Your messages are free."
           )}
         </div>

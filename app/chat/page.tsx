@@ -14,6 +14,8 @@ type Agent = {
   name: string;
   description: string;
   avatar: string | null;
+  messageCost: number;
+  tags?: string | null;
 };
 
 type Kundali = {

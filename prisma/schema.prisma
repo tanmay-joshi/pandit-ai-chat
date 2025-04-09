@@ -93,15 +93,17 @@ model Message {
 
 // New Agent model for different AI personalities
 model Agent {
-  id          String   @id @default(cuid())
-  name        String
-  description String
-  avatar      String?  // URL to avatar image
-  systemPrompt String  // Instructions for the AI's personality/behavior
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isActive    Boolean  @default(true)
-  chats       Chat[]
+  id            String   @id @default(cuid())
+  name          String
+  description   String
+  avatar        String?  // URL to avatar image
+  systemPrompt  String   // Instructions for the AI's personality/behavior
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  isActive      Boolean  @default(true)
+  messageCost   Int      @default(10) // Cost in credits per message for this agent
+  tags          String?  // Comma-separated tags like "basic", "experienced", "expert"
+  chats         Chat[]
 }
 
 // New Wallet model for user credits

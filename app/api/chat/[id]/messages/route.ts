@@ -14,8 +14,8 @@ import {
 // The default system prompt if no agent is specified
 const DEFAULT_SYSTEM_PROMPT = `You are a helpful, knowledgeable, and friendly AI assistant. Answer user questions accurately and provide useful information.`;
 
-// Cost per message in credits
-const MESSAGE_COST = 10;
+// Default cost per message in credits (will be overridden by agent's messageCost if available)
+const DEFAULT_MESSAGE_COST = 10;
 
 // Create the AI chain with the specified system prompt
 const createAIChain = (systemPrompt: string) => {
@@ -103,15 +103,6 @@ export async function POST(
       user.wallet = updatedUser.wallet;
     }
     
-    // Check if user has enough credits for a message (only AI response now)
-    if (user.wallet.balance < MESSAGE_COST) {
-      return NextResponse.json({ 
-        error: "Insufficient credits", 
-        balance: user.wallet.balance,
-        required: MESSAGE_COST
-      }, { status: 402 }); // 402 Payment Required
-    }
-
     // Get the chat along with its agent if one is associated
     const chat = await prisma.chat.findUnique({
       where: { id: chatId },
@@ -176,16 +167,28 @@ Make references to this information when appropriate in your responses.
     // Initialize the AI chain with the appropriate system prompt
     const aiChain = createAIChain(systemPrompt);
 
+    // Check if user has enough credits for a message (AI response)
+    // Use agent-specific message cost if available, otherwise default
+    const messageCost = chat.agent?.messageCost || DEFAULT_MESSAGE_COST;
+    
+    if (user.wallet.balance < messageCost) {
+      return NextResponse.json({ 
+        error: "Insufficient credits", 
+        balance: user.wallet.balance,
+        required: messageCost
+      }, { status: 402 }); // 402 Payment Required
+    }
+
     // Deduct credits for AI message
     await prisma.wallet.update({
       where: { id: user.wallet.id },
       data: {
-        balance: { decrement: MESSAGE_COST },
+        balance: { decrement: messageCost },
         transactions: {
           create: {
-            amount: -MESSAGE_COST,
+            amount: -messageCost,
             type: "message_fee",
-            description: "AI response fee"
+            description: `AI response fee (${chat.agent?.name || 'Default agent'})`
           }
         }
       }
@@ -198,7 +201,7 @@ Make references to this information when appropriate in your responses.
         role: "assistant",
         chatId,
         userId: user.id,
-        cost: MESSAGE_COST,
+        cost: messageCost,
         paid: true
       }
     });
@@ -282,10 +285,10 @@ Make references to this information when appropriate in your responses.
       await prisma.wallet.update({
         where: { id: user.wallet.id },
         data: {
-          balance: { increment: MESSAGE_COST },
+          balance: { increment: messageCost },
           transactions: {
             create: {
-              amount: MESSAGE_COST,
+              amount: messageCost,
               type: "refund",
               description: "Refund for failed AI response"
             }
