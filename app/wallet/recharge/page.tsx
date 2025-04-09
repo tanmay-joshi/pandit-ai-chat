@@ -154,7 +154,8 @@ export default function WalletRechargePage() {
           <div className="bg-white rounded-lg shadow p-6 mt-4">
             <h3 className="font-semibold mb-2">Why Recharge?</h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li>• Each AI response costs 10 credits</li>
+              <li>• AI responses cost between 10-20 credits depending on the Pandit's expertise level</li>
+              <li>• Basic Pandits: 10 credits | Experienced: 15 credits | Expert: 20 credits</li>
               <li>• Your messages are always free</li>
               <li>• Consult with specialized Pandits</li>
               <li>• Get personalized guidance and advice</li>

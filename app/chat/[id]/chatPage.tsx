@@ -5,16 +5,18 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import SuggestedQuestions from "@/components/SuggestedQuestions";
 import { Send } from "lucide-react";
 
 type Message = {
   id: string;
-  content: string | React.ReactNode;
-  role: "user" | "assistant" | "system";
+  content: string;
+  role: "user" | "assistant"; 
   createdAt: string;
   hasOptions?: boolean;
+  suggestedQuestions?: string[];
 };
 
 type Agent = {
@@ -23,6 +25,9 @@ type Agent = {
   description: string;
   avatar: string | null;
   systemPrompt: string;
+  messageCost: number;
+  tags?: string | null;
+  kundaliLimit: number;
 };
 
 type Kundali = {
@@ -37,7 +42,7 @@ type Chat = {
   title: string;
   messages: Message[];
   agent?: Agent | null;
-  kundali?: Kundali | null;
+  kundalis?: Kundali[] | null;
 };
 
 enum SelectionStep {
@@ -63,9 +68,12 @@ export default function ChatPageClient({ id }: { id: string }) {
   const [kundalis, setKundalis] = useState<Kundali[]>([]);
   const [step, setStep] = useState<SelectionStep>(SelectionStep.Initial);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [selectedKundaliId, setSelectedKundaliId] = useState<string | null>(null);
+  const [selectedKundaliIds, setSelectedKundaliIds] = useState<string[]>([]);
   const [chatId, setChatId] = useState<string | null>(null);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const [partialResponse, setPartialResponse] = useState("");
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -129,6 +137,25 @@ export default function ChatPageClient({ id }: { id: string }) {
         throw new Error("Chat not found");
       }
       const data = await response.json();
+      
+      // Process messages to parse suggestedQuestions if needed
+      if (data.messages) {
+        data.messages = data.messages.map((msg: any) => {
+          if (msg.suggestedQuestions && typeof msg.suggestedQuestions === 'string') {
+            try {
+              return {
+                ...msg,
+                suggestedQuestions: JSON.parse(msg.suggestedQuestions)
+              };
+            } catch (e) {
+              console.error("Error parsing suggestedQuestions:", e);
+              return msg;
+            }
+          }
+          return msg;
+        });
+      }
+      
       setChat(data);
       setStep(SelectionStep.Chatting);
       setLoading(false);
@@ -230,6 +257,7 @@ export default function ChatPageClient({ id }: { id: string }) {
   const handleAgentSelect = async (agent: Agent) => {
     console.log("Agent selected:", agent.name, agent.id);
     setSelectedAgentId(agent.id);
+    setSelectedAgent(agent);
     
     // Add user selection message
     const userSelectMessage: Message = {
@@ -281,7 +309,7 @@ export default function ChatPageClient({ id }: { id: string }) {
                 ...prev.messages,
                 {
                   id: "kundali-prompt",
-                  content: "Great! Now, please select a Kundali (birth chart) for your consultation:",
+                  content: `Great! Now, please select ${agent.kundaliLimit > 1 ? 'up to ' + agent.kundaliLimit + ' kundalis' : 'a kundali'} for your consultation:`,
                   role: "assistant" as const,
                   createdAt: new Date().toISOString(),
                   hasOptions: true
@@ -313,19 +341,45 @@ export default function ChatPageClient({ id }: { id: string }) {
     }
   };
 
-  // Handle kundali selection
-  const handleKundaliSelect = async (kundali: Kundali) => {
-    setSelectedKundaliId(kundali.id);
+  // Toggle kundali selection
+  const toggleKundaliSelection = (kundali: Kundali) => {
+    if (!selectedAgent) return;
     
+    const isSelected = selectedKundaliIds.includes(kundali.id);
+    
+    if (isSelected) {
+      // Remove from selection
+      setSelectedKundaliIds(prev => prev.filter(id => id !== kundali.id));
+    } else {
+      // Add to selection if limit not reached
+      if (selectedKundaliIds.length < selectedAgent.kundaliLimit) {
+        setSelectedKundaliIds(prev => [...prev, kundali.id]);
+      }
+    }
+  };
+
+  // Handle kundali selection confirmation
+  const confirmKundaliSelection = async () => {
+    if (selectedKundaliIds.length === 0) {
+      setError("Please select at least one kundali to continue");
+      return;
+    }
+    
+    // Get selected kundalis
+    const selectedKundalisList = kundalis.filter(k => selectedKundaliIds.includes(k.id));
+    
+    // Add selection message to chat
     if (chat) {
-      // Add selection message to chat
+      // Create message listing selected kundalis
+      const kundaliNames = selectedKundalisList.map(k => k.fullName).join(", ");
+      
       setChat({
         ...chat,
         messages: [
           ...chat.messages,
           {
             id: `user-kundali-${Date.now()}`,
-            content: `I'll use the birth chart for ${kundali.fullName}`,
+            content: `I'll use the birth charts for: ${kundaliNames}`,
             role: "user" as const,
             createdAt: new Date().toISOString(),
           }
@@ -351,13 +405,10 @@ export default function ChatPageClient({ id }: { id: string }) {
     try {
       setIsCreatingChat(true);
       
-      // Get the selected agent
-      const selectedAgent = agents.find(a => a.id === selectedAgentId);
-      
       // Create a descriptive title
       const chatTitle = selectedAgent 
-        ? `${selectedAgent.name} consultation for ${kundali.fullName}`
-        : `Consultation for ${kundali.fullName}`;
+        ? `${selectedAgent.name} consultation${selectedKundalisList.length > 1 ? ' (multiple charts)' : ` for ${selectedKundalisList[0].fullName}`}`
+        : `Consultation${selectedKundalisList.length > 1 ? ' (multiple charts)' : ` for ${selectedKundalisList[0].fullName}`}`;
       
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -367,7 +418,7 @@ export default function ChatPageClient({ id }: { id: string }) {
         body: JSON.stringify({ 
           title: chatTitle, 
           agentId: selectedAgentId,
-          kundaliId: kundali.id
+          kundaliIds: selectedKundaliIds
         }),
       });
 
@@ -395,11 +446,9 @@ export default function ChatPageClient({ id }: { id: string }) {
             }
           ],
           agent: agents.find(a => a.id === selectedAgentId) || null,
-          kundali: kundali
+          kundalis: selectedKundalisList
         });
       }
-      
-      setStep(SelectionStep.Ready);
       
       // Dispatch custom event for sidebar to refresh chats
       window.dispatchEvent(new CustomEvent('chat-created', { 
@@ -441,6 +490,47 @@ export default function ChatPageClient({ id }: { id: string }) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat?.messages]);
+
+  // Extract suggested questions from the AI response
+  const extractSuggestedQuestions = (content: string): string[] => {
+    // Look for the suggested questions section
+    const match = content.match(/SUGGESTED QUESTIONS:[\s\n]*1\.[\s\n]*([^\n]+)[\s\n]*2\.[\s\n]*([^\n]+)[\s\n]*3\.[\s\n]*([^\n]+)/i);
+    
+    if (match && match.length >= 4) {
+      return [
+        match[1].trim(),
+        match[2].trim(),
+        match[3].trim()
+      ];
+    }
+    
+    return [];
+  };
+
+  // Process incoming stream chunks
+  const handleChunk = (chunk: string) => {
+    setPartialResponse((prev: string) => {
+      const newResponse = prev + chunk;
+      
+      // Only extract suggestions when we receive a chunk that might contain the end markers
+      if (chunk.includes("SUGGESTED QUESTIONS:") || chunk.includes("1.") || chunk.includes("2.") || chunk.includes("3.")) {
+        const extracted = extractSuggestedQuestions(newResponse);
+        if (extracted.length > 0) {
+          setSuggestedQuestions(extracted);
+        }
+      }
+      
+      return newResponse;
+    });
+  };
+
+  // Handle sending a suggested question
+  const sendSuggestedQuestion = (question: string) => {
+    setInput(question);
+    // Optionally auto-send:
+    // setInput("");
+    // sendMessage(new Event('submit') as any);
+  };
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -573,52 +663,80 @@ export default function ChatPageClient({ id }: { id: string }) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let receivedText = "";
+      setSuggestedQuestions([]);
+      setPartialResponse("");
       
-      // Process the stream chunks
-      while (true) {
-        const { done, value } = await reader.read();
+      try {
+        let done = false;
         
-        if (done) {
-          console.log("Stream completed");
-          break;
-        }
-        
-        // Decode the chunk and update the message content
-        const chunk = decoder.decode(value, { stream: true });
-        receivedText += chunk;
-        
-        // Update the chat state with the new content
-        setChat((prevChat) => {
-          if (!prevChat) return prevChat;
+        while (!done) {
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
           
-          return {
-            ...prevChat,
-            messages: prevChat.messages.map((msg) => {
-              if (msg.id === optimisticAiMsg.id || msg.id === aiMessageId) {
+          if (done) {
+            // We're done reading the stream
+            break;
+          }
+          
+          // Decode the chunk and append to received text
+          const chunk = decoder.decode(value, { stream: true });
+          receivedText += chunk;
+          
+          // Process the chunk for UI updates and extract suggestions
+          handleChunk(chunk);
+          
+          // Update the optimistic AI message in the UI
+          setChat(prev => {
+            if (!prev) return prev;
+            
+            // Find and update the optimistic message
+            const updatedMessages = prev.messages.map(m => {
+              if (m.id === optimisticAiMsg.id) {
                 return {
-                  ...msg,
-                  id: aiMessageId,
+                  ...m,
                   content: receivedText
                 };
               }
-              return msg;
-            })
-          };
-        });
+              return m;
+            });
+            
+            return {
+              ...prev,
+              messages: updatedMessages
+            };
+          });
+        }
+        
+        console.log("Stream complete, final response length:", receivedText.length);
+        
+        // Extract final suggested questions
+        const finalQuestions = extractSuggestedQuestions(receivedText);
+        if (finalQuestions.length > 0) {
+          setSuggestedQuestions(finalQuestions);
+        }
+        
+        // Update the message in the database with the complete response and questions
+        try {
+          await fetch(`/api/chat/${targetId}/messages/${aiMessageId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ 
+              content: receivedText,
+              suggestedQuestions: finalQuestions
+            }),
+          });
+          console.log("Saved complete AI response to database");
+        } catch (updateError) {
+          console.error("Failed to save complete response:", updateError);
+        }
+        
+      } catch (streamError) {
+        console.error("Error processing stream:", streamError);
+        setError("Error while reading the AI response stream");
       }
       
-      // Final update after streaming is complete
-      if (receivedText.length === 0) {
-        console.error("Received empty response from AI");
-        throw new Error("Received empty response from AI");
-      }
-      
-      // After first message is sent in a new chat, move to chatting state
-      if (step === SelectionStep.Ready) {
-        setStep(SelectionStep.Chatting);
-      }
-      
-      console.log("Streaming complete. Final response length:", receivedText.length);
     } catch (error) {
       console.error("Error sending message:", error);
       
@@ -685,19 +803,26 @@ export default function ChatPageClient({ id }: { id: string }) {
       kundalisData: kundalis 
     });
     
-    if (step !== SelectionStep.SelectKundali || !kundalis || kundalis.length === 0) {
+    if (step !== SelectionStep.SelectKundali || !kundalis || kundalis.length === 0 || !selectedAgent) {
       console.log("Not rendering kundali options because conditions not met");
       return null;
     }
     
     return (
       <div className="flex flex-col gap-2 mt-2">
+        <p className="text-sm text-blue-600 mb-1">
+          {selectedAgent.kundaliLimit > 1 
+            ? `Select up to ${selectedAgent.kundaliLimit} kundalis. Selected: ${selectedKundaliIds.length}/${selectedAgent.kundaliLimit}`
+            : 'Select 1 kundali:'}
+        </p>
+        
         {kundalis.map((kundali) => (
           <Button
             key={kundali.id}
-            variant="outline"
-            className="justify-start text-left"
-            onClick={() => handleKundaliSelect(kundali)}
+            variant={selectedKundaliIds.includes(kundali.id) ? "default" : "outline"}
+            className={`justify-start text-left ${selectedKundaliIds.includes(kundali.id) ? 'bg-blue-600' : ''}`}
+            onClick={() => toggleKundaliSelection(kundali)}
+            disabled={!selectedKundaliIds.includes(kundali.id) && selectedKundaliIds.length >= selectedAgent.kundaliLimit}
           >
             <div>
               <div className="font-medium">{kundali.fullName}</div>
@@ -707,16 +832,71 @@ export default function ChatPageClient({ id }: { id: string }) {
             </div>
           </Button>
         ))}
-        <Button 
-          variant="link" 
-          className="self-start mt-1"
-          onClick={() => router.push("/kundali")}
-        >
-          + Add a new Kundali
-        </Button>
+        
+        <div className="flex gap-2 mt-2">
+          <Button 
+            variant="link" 
+            className="self-start"
+            onClick={() => router.push("/kundali")}
+          >
+            + Add a new Kundali
+          </Button>
+          
+          <Button
+            variant="default"
+            className="ml-auto"
+            disabled={selectedKundaliIds.length === 0}
+            onClick={confirmKundaliSelection}
+          >
+            Continue with selected
+          </Button>
+        </div>
       </div>
     );
   };
+
+  // Display multiple kundalis in chat header
+  const renderKundalisList = () => {
+    if (!chat || !chat.kundalis || chat.kundalis.length === 0) return null;
+    
+    return (
+      <div className="mt-4 space-y-2">
+        {chat.kundalis.map((kundali, index) => (
+          <div key={index} className="border-t first:border-t-0 pt-2 first:pt-0">
+            <p className="font-medium text-sm">{kundali.fullName}</p>
+            <p className="text-xs text-gray-600">Born: {new Date(kundali.dateOfBirth).toLocaleString()}</p>
+            <p className="text-xs text-gray-600">Place: {kundali.placeOfBirth}</p>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Extract and set suggestions from the latest AI message when messages change
+  useEffect(() => {
+    if (chat?.messages && chat.messages.length > 0) {
+      // Get the last message from the assistant
+      const assistantMessages = chat.messages.filter(m => m.role === "assistant");
+      
+      if (assistantMessages.length > 0) {
+        const lastMessage = assistantMessages[assistantMessages.length - 1];
+        
+        // First check if the message already has suggested questions
+        if (lastMessage.suggestedQuestions && lastMessage.suggestedQuestions.length > 0) {
+          setSuggestedQuestions(lastMessage.suggestedQuestions);
+        } else {
+          // Otherwise try to extract them from the content
+          const extractedQuestions = extractSuggestedQuestions(lastMessage.content);
+          if (extractedQuestions.length > 0) {
+            setSuggestedQuestions(extractedQuestions);
+          } else {
+            // No suggestions found
+            setSuggestedQuestions([]);
+          }
+        }
+      }
+    }
+  }, [chat?.messages]);
 
   if (status === "loading" || loading) {
     return (
@@ -764,12 +944,12 @@ export default function ChatPageClient({ id }: { id: string }) {
                 <span className="text-blue-700">{chat.agent.name}</span>
               </div>
             )}
-            {chat.kundali && (
+            {chat.kundalis && chat.kundalis.length > 0 && (
               <div className="flex items-center ml-3 px-2 py-1 bg-purple-50 rounded-full text-sm">
                 <div className="w-5 h-5 mr-1 rounded-full bg-purple-200 flex items-center justify-center">
                   <span className="text-purple-700 text-xs font-bold">K</span>
                 </div>
-                <span className="text-purple-700">{chat.kundali.fullName}</span>
+                <span className="text-purple-700">{chat.kundalis.length} Kundalis</span>
               </div>
             )}
           </div>
@@ -825,14 +1005,10 @@ export default function ChatPageClient({ id }: { id: string }) {
                 {chat.agent.description}
               </p>
             )}
-            {chat.kundali && (
+            {chat.kundalis && chat.kundalis.length > 0 && (
               <div className="mb-6 max-w-md bg-purple-50 p-4 rounded-lg">
                 <h3 className="text-center text-purple-700 font-medium mb-2">Kundali Information</h3>
-                <p className="text-sm text-center text-gray-700">
-                  <span className="font-medium">Name:</span> {chat.kundali.fullName}<br />
-                  <span className="font-medium">Born:</span> {new Date(chat.kundali.dateOfBirth).toLocaleString()}<br />
-                  <span className="font-medium">Place:</span> {chat.kundali.placeOfBirth}
-                </p>
+                {renderKundalisList()}
               </div>
             )}
             <p className="text-center text-sm text-gray-500">
@@ -909,34 +1085,43 @@ export default function ChatPageClient({ id }: { id: string }) {
       </div>
 
       {/* Input area */}
-      <div className="border-t border-gray-200 bg-white p-4">
-        <form onSubmit={sendMessage} className="flex">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={step === SelectionStep.Ready || step === SelectionStep.Chatting 
-              ? `Ask ${chat.agent ? chat.agent.name : 'anything'}...` 
-              : "Please complete the setup process first..."}
-            className="min-h-9 flex-1 resize-none rounded-l-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
-            disabled={sending || step !== SelectionStep.Ready && step !== SelectionStep.Chatting}
-          />
-          <Button
-            type="submit"
-            className="rounded-r-md"
-            disabled={sending || !input.trim() || (step !== SelectionStep.Ready && step !== SelectionStep.Chatting)}
-          >
-            <Send className="h-4 w-4" />
-            <span className="sr-only">Send</span>
-          </Button>
-        </form>
-        <div className="mt-2 text-xs text-gray-500">
-          {step !== SelectionStep.Ready && step !== SelectionStep.Chatting ? (
-            step === SelectionStep.Initial ? "Loading options..." : 
-            step === SelectionStep.SelectAgent ? "Please select a Pandit to continue" : 
-            "Please select a Kundali to continue"
-          ) : (
-            "Each AI response costs 10 credits. Your messages are free."
-          )}
+      <div className="border-t border-gray-200 bg-white">
+        <SuggestedQuestions 
+          questions={suggestedQuestions} 
+          onQuestionClick={sendSuggestedQuestion}
+          isLoading={sending} 
+        />
+        <div className="p-4">
+          <form onSubmit={sendMessage} className="flex">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={step === SelectionStep.Ready || step === SelectionStep.Chatting 
+                ? `Ask ${chat.agent ? chat.agent.name : 'anything'}...` 
+                : "Please complete the setup process first..."}
+              className="min-h-9 flex-1 resize-none rounded-l-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+              disabled={sending || step !== SelectionStep.Ready && step !== SelectionStep.Chatting}
+            />
+            <Button
+              type="submit"
+              className="rounded-r-md"
+              disabled={sending || !input.trim() || (step !== SelectionStep.Ready && step !== SelectionStep.Chatting)}
+            >
+              <Send className="h-4 w-4" />
+              <span className="sr-only">Send</span>
+            </Button>
+          </form>
+          <div className="mt-2 text-xs text-gray-500">
+            {step !== SelectionStep.Ready && step !== SelectionStep.Chatting ? (
+              step === SelectionStep.Initial ? "Loading options..." : 
+              step === SelectionStep.SelectAgent ? "Please select a Pandit to continue" : 
+              "Please select a Kundali to continue"
+            ) : (
+              chat && chat.agent ? 
+              `Each AI response costs ${chat.agent.messageCost} credits. Your messages are free.` :
+              "Each AI response costs 10 credits. Your messages are free."
+            )}
+          </div>
         </div>
       </div>
     </div>

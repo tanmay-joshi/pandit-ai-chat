@@ -6,7 +6,7 @@ import { authOptions } from "../../auth/[...nextauth]/route";
 // Get a specific chat with its messages
 export async function GET(
   req: NextRequest,
-  { params }: { params: any }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -23,10 +23,10 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const { id: chatId } = await params;
+    const { id } = params;
 
     const chat = await prisma.chat.findUnique({
-      where: { id: chatId },
+      where: { id: id },
       include: {
         messages: {
           orderBy: { createdAt: "asc" },
@@ -43,7 +43,20 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    return NextResponse.json(chat);
+    // Fetch associated kundalis for this chat
+    const chatKundalis = await prisma.$queryRaw`
+      SELECT k.* FROM "Kundali" k
+      JOIN "ChatKundali" ck ON k.id = ck.kundaliId
+      WHERE ck.chatId = ${id}
+    `;
+    
+    // Add kundalis to the chat response
+    const chatWithKundalis = {
+      ...chat,
+      kundalis: chatKundalis || []
+    };
+
+    return NextResponse.json(chatWithKundalis);
   } catch (error) {
     console.error("Error fetching chat:", error);
     return NextResponse.json(
