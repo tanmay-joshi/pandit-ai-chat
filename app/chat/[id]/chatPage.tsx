@@ -492,19 +492,24 @@ export default function ChatPageClient({ id }: { id: string }) {
   }, [chat?.messages]);
 
   // Extract suggested questions from the AI response
-  const extractSuggestedQuestions = (content: string): string[] => {
+  const extractSuggestedQuestions = (content: string): { questions: string[], cleanedContent: string } => {
     // Look for the suggested questions section
     const match = content.match(/SUGGESTED QUESTIONS:[\s\n]*1\.[\s\n]*([^\n]+)[\s\n]*2\.[\s\n]*([^\n]+)[\s\n]*3\.[\s\n]*([^\n]+)/i);
     
     if (match && match.length >= 4) {
-      return [
-        match[1].trim(),
-        match[2].trim(),
-        match[3].trim()
-      ];
+      // Remove the suggested questions from the content
+      const cleanedContent = content.replace(match[0], '').trim();
+      return {
+        questions: [
+          match[1].trim(),
+          match[2].trim(),
+          match[3].trim()
+        ],
+        cleanedContent
+      };
     }
     
-    return [];
+    return { questions: [], cleanedContent: content };
   };
 
   // Process incoming stream chunks
@@ -514,9 +519,10 @@ export default function ChatPageClient({ id }: { id: string }) {
       
       // Only extract suggestions when we receive a chunk that might contain the end markers
       if (chunk.includes("SUGGESTED QUESTIONS:") || chunk.includes("1.") || chunk.includes("2.") || chunk.includes("3.")) {
-        const extracted = extractSuggestedQuestions(newResponse);
-        if (extracted.length > 0) {
-          setSuggestedQuestions(extracted);
+        const { questions, cleanedContent } = extractSuggestedQuestions(newResponse);
+        if (questions.length > 0) {
+          setSuggestedQuestions(questions);
+          return cleanedContent;
         }
       }
       
@@ -710,9 +716,9 @@ export default function ChatPageClient({ id }: { id: string }) {
         console.log("Stream complete, final response length:", receivedText.length);
         
         // Extract final suggested questions
-        const finalQuestions = extractSuggestedQuestions(receivedText);
-        if (finalQuestions.length > 0) {
-          setSuggestedQuestions(finalQuestions);
+        const { questions, cleanedContent } = extractSuggestedQuestions(receivedText);
+        if (questions.length > 0) {
+          setSuggestedQuestions(questions);
         }
         
         // Update the message in the database with the complete response and questions
@@ -723,8 +729,8 @@ export default function ChatPageClient({ id }: { id: string }) {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ 
-              content: receivedText,
-              suggestedQuestions: finalQuestions
+              content: cleanedContent,
+              suggestedQuestions: questions
             }),
           });
           console.log("Saved complete AI response to database");
@@ -886,9 +892,10 @@ export default function ChatPageClient({ id }: { id: string }) {
           setSuggestedQuestions(lastMessage.suggestedQuestions);
         } else {
           // Otherwise try to extract them from the content
-          const extractedQuestions = extractSuggestedQuestions(lastMessage.content);
-          if (extractedQuestions.length > 0) {
-            setSuggestedQuestions(extractedQuestions);
+          const { questions, cleanedContent } = extractSuggestedQuestions(lastMessage.content);
+          if (questions.length > 0) {
+            setSuggestedQuestions(questions);
+            lastMessage.content = cleanedContent; // Update the message content without suggestions
           } else {
             // No suggestions found
             setSuggestedQuestions([]);
