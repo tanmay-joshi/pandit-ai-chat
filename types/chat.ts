@@ -32,4 +32,5 @@ export type Chat = {
   messages: Message[];
   agent?: Agent | null;
   kundalis?: Kundali[] | null;
+  createdAt: string;
 }; 
