@@ -1,31 +1,29 @@
-import type { Metadata } from "next";
-import { Epilogue } from "next/font/google";
+import { Inter } from "next/font/google";
+import { Toaster } from "sonner";
+import { NavigationBar } from "@/components/NavigationBar";
+import { cn } from "@/lib/utils";
+import { Providers } from "@/components/Providers";
 import "./globals.css";
-import { Providers } from "./providers";
-import ClientLayout from "@/components/ClientLayout";
 
-const epilogue = Epilogue({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-epilogue",
-  display: "swap",
-});
-
-export const metadata: Metadata = {
-  title: "Pandit AI Chat",
-  description: "Chat with your AI pandit",
-};
+const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${epilogue.variable} font-sans antialiased`}>
+      <body className={cn(
+        "min-h-screen bg-background antialiased",
+        inter.className
+      )}>
         <Providers>
-          <ClientLayout>{children}</ClientLayout>
+          <NavigationBar />
+          <main className="min-h-screen md:pl-24">
+            {children}
+          </main>
+          <Toaster position="bottom-right" />
         </Providers>
       </body>
     </html>
