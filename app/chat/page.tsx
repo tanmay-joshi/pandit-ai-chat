@@ -8,6 +8,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Plus, MessageSquare, Calendar } from "lucide-react";
 import { Chat } from "@/types/chat";
+import { Loading } from "@/components/ui/loading";
 
 export default function ChatsPage() {
   const { data: session, status } = useSession();
@@ -44,20 +45,23 @@ export default function ChatsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="fixed inset-0 flex items-center justify-center bg-[#F0F0F3]">
+        <Loading size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-gray-50">
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-[#F0F0F3]">
       {/* Header */}
-      <header className="bg-white px-4 py-3 shadow-sm">
+      <header className="px-4 py-6">
         <div className="mx-auto max-w-4xl">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Your Consultations</h1>
-            <Button onClick={() => router.push("/chat/new")} className="bg-black hover:bg-black/90">
+            <h1 className="text-2xl font-libre-bold text-[#212121]">Your Consultations</h1>
+            <Button 
+              onClick={() => router.push("/chat/new")} 
+              className="rounded-xl bg-[#F0F0F3] px-6 py-3 font-libre-regular text-[#212121] shadow-[-.125rem_-.125rem_.25rem_rgba(255,255,255,0.8),.125rem_.125rem_.25rem_rgba(174,174,192,0.4)] hover:shadow-[-.0625rem_-.0625rem_.125rem_rgba(255,255,255,0.8),.0625rem_.0625rem_.125rem_rgba(174,174,192,0.3)] transition-shadow duration-300"
+            >
               <Plus className="mr-2 h-4 w-4" />
               New Consultation
             </Button>
@@ -69,37 +73,40 @@ export default function ChatsPage() {
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-4xl p-4">
           {error ? (
-            <div className="rounded-lg bg-red-50 p-4 text-red-700">
+            <div className="rounded-2xl bg-[#F0F0F3] p-6 text-red-700 shadow-[-.125rem_-.125rem_.25rem_rgba(255,255,255,0.8),.125rem_.125rem_.25rem_rgba(174,174,192,0.4)]">
               {error}
             </div>
           ) : chats.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg bg-white p-8 text-center shadow-sm">
-              <div className="mb-4 rounded-full bg-gray-100 p-3">
-                <MessageSquare className="h-6 w-6 text-gray-400" />
+            <div className="flex flex-col items-center justify-center rounded-2xl bg-[#F0F0F3] p-12 text-center shadow-[-.125rem_-.125rem_.25rem_rgba(255,255,255,0.8),.125rem_.125rem_.25rem_rgba(174,174,192,0.4)]">
+              <div className="mb-6 rounded-full bg-[#F0F0F3] p-4 shadow-[-.0625rem_-.0625rem_.125rem_rgba(255,255,255,0.8),.0625rem_.0625rem_.125rem_rgba(174,174,192,0.4)]">
+                <MessageSquare className="h-8 w-8 text-[#212121]" />
               </div>
-              <h2 className="mb-2 text-xl font-semibold">No consultations yet</h2>
-              <p className="mb-4 text-gray-600">
+              <h2 className="mb-3 text-xl font-libre-bold text-[#212121]">No consultations yet</h2>
+              <p className="mb-6 text-muted-foreground font-libre-regular">
                 Start your first consultation with our AI-powered spiritual guides
               </p>
-              <Button onClick={() => router.push("/chat/new")} className="bg-black hover:bg-black/90">
+              <Button 
+                onClick={() => router.push("/chat/new")} 
+                className="rounded-xl bg-[#F0F0F3] px-6 py-3 font-libre-regular text-[#212121] shadow-[-.125rem_-.125rem_.25rem_rgba(255,255,255,0.8),.125rem_.125rem_.25rem_rgba(174,174,192,0.4)] hover:shadow-[-.0625rem_-.0625rem_.125rem_rgba(255,255,255,0.8),.0625rem_.0625rem_.125rem_rgba(174,174,192,0.3)] transition-shadow duration-300"
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Start New Consultation
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {chats.map((chat) => (
                 <Link
                   key={chat.id}
                   href={`/chat/${chat.id}`}
-                  className="block transform rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5 transition hover:shadow-md"
+                  className="group block rounded-2xl bg-[#F0F0F3] p-6 shadow-[-.125rem_-.125rem_.25rem_rgba(255,255,255,0.8),.125rem_.125rem_.25rem_rgba(174,174,192,0.4)] transition-shadow duration-300 hover:shadow-[-.0625rem_-.0625rem_.125rem_rgba(255,255,255,0.8),.0625rem_.0625rem_.125rem_rgba(174,174,192,0.3)]"
                 >
                   <div className="flex items-start gap-4">
                     {/* Agent Avatar */}
                     {chat.agent && (
                       <div className="flex-shrink-0">
                         {chat.agent.avatar ? (
-                          <div className="relative h-12 w-12 overflow-hidden rounded-xl">
+                          <div className="relative h-14 w-14 overflow-hidden rounded-2xl bg-[#F0F0F3] shadow-[-.0625rem_-.0625rem_.125rem_rgba(255,255,255,0.8),.0625rem_.0625rem_.125rem_rgba(174,174,192,0.4)]">
                             <Image
                               src={chat.agent.avatar}
                               alt={chat.agent.name}
@@ -108,8 +115,8 @@ export default function ChatsPage() {
                             />
                           </div>
                         ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100">
-                            <span className="text-lg font-semibold text-gray-600">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F0F0F3] shadow-[-.0625rem_-.0625rem_.125rem_rgba(255,255,255,0.8),.0625rem_.0625rem_.125rem_rgba(174,174,192,0.4)]">
+                            <span className="text-xl font-libre-bold text-[#212121]">
                               {chat.agent.name.charAt(0)}
                             </span>
                           </div>
@@ -118,22 +125,22 @@ export default function ChatsPage() {
                     )}
 
                     {/* Chat Info */}
-                    <div className="flex-1 space-y-1">
-                      <h3 className="font-medium">{chat.title}</h3>
+                    <div className="flex-1 space-y-2">
+                      <h3 className="font-libre-bold text-[#212121]">{chat.title}</h3>
                       {chat.agent && (
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground font-libre-regular">
                           with {chat.agent.name}
                         </p>
                       )}
                       {chat.messages && (
-                        <p className="text-sm text-gray-500">
+                        <div className="inline-flex items-center rounded-xl bg-[#F0F0F3] px-3 py-1 text-sm font-libre-regular text-muted-foreground shadow-[inset_-.03125rem_-.03125rem_.0625rem_rgba(255,255,255,0.8),inset_.03125rem_.03125rem_.0625rem_rgba(174,174,192,0.4)]">
                           {chat.messages.length} messages
-                        </p>
+                        </div>
                       )}
                     </div>
 
                     {/* Date */}
-                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                    <div className="flex items-center gap-2 rounded-xl bg-[#F0F0F3] px-3 py-1 text-sm font-libre-regular text-muted-foreground shadow-[inset_-.03125rem_-.03125rem_.0625rem_rgba(255,255,255,0.8),inset_.03125rem_.03125rem_.0625rem_rgba(174,174,192,0.4)]">
                       <Calendar className="h-4 w-4" />
                       <span>
                         {new Date(chat.messages?.[0]?.createdAt || chat.createdAt || Date.now()).toLocaleDateString()}
