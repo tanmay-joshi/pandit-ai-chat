@@ -55,7 +55,7 @@ export default function ProfilePage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center neu-container">
         <Loading size="lg" />
       </div>
     );
@@ -63,11 +63,11 @@ export default function ProfilePage() {
 
   if (status === "unauthenticated") {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="rounded-2xl bg-[#F8F7F4] p-8 text-center border-[0.1rem] border-[#212121] shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1),0_-1px_2px_-2px_rgba(0,0,0,0.1)]">
-          <h1 className="text-2xl font-libre-bold mb-4">Access Denied</h1>
-          <p className="mb-6 font-libre-regular text-muted-foreground">Please sign in to view your profile</p>
-          <Button onClick={() => window.location.href = "/"} className="font-libre-regular">
+      <div className="flex min-h-screen items-center justify-center p-4 neu-container">
+        <div className="neu-card">
+          <h1 className="neu-title neu-2xl mb-4">Access Denied</h1>
+          <p className="mb-6 neu-text text-muted-foreground">Please sign in to view your profile</p>
+          <Button onClick={() => window.location.href = "/"} className="neu-button neu-button-hover">
             Go to Homepage
           </Button>
         </div>
@@ -86,111 +86,119 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-libre-bold mb-4">My Profile</h1>
-      <p className="text-muted-foreground font-libre-regular mb-8">
-        Manage your profile and account settings
-      </p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Profile Card */}
-        <div className="group relative rounded-2xl bg-[#F8F7F4] p-6 border-[0.1rem] border-[#212121] shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1),0_-1px_2px_-2px_rgba(0,0,0,0.1)] transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:bg-white/20 before:backdrop-blur-[2px] after:absolute after:inset-0 after:-z-20 after:rounded-[inherit] after:bg-gradient-to-b after:from-white/80 after:to-white/20">
-          <div className="flex flex-col items-center">
-            <div className="mb-4 relative w-32 h-32 rounded-full overflow-hidden bg-[#F8F7F4] border-[0.1rem] border-[#212121] shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1)]">
-              {userData.image ? (
-                <Image
-                  src={userData.image}
-                  alt={userData.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-[#F8F7F4] text-[#212121] text-4xl font-libre-bold">
-                  {userData.name?.charAt(0).toUpperCase() || "U"}
-                </div>
-              )}
-            </div>
-            <h2 className="text-2xl font-libre-bold">{userData.name}</h2>
-            <p className="text-muted-foreground font-libre-regular mb-6">{userData.email}</p>
-            <div className="text-sm text-muted-foreground font-libre-regular">
-              Member since {new Date(userData.joinedAt).toLocaleDateString()}
-            </div>
-          </div>
+    <div className="fixed inset-0 flex flex-col overflow-hidden neu-container">
+      <header className="px-4 py-6">
+        <div className="mx-auto max-w-4xl">
+          <h1 className="neu-title neu-3xl">My Profile</h1>
+          <p className="neu-text text-muted-foreground">
+            Manage your profile and account settings
+          </p>
         </div>
+      </header>
 
-        {/* Statistics & Settings */}
-        <div className="md:col-span-2 space-y-6">
-          {/* Statistics */}
-          <div className="group relative rounded-2xl bg-[#F8F7F4] p-6 border-[0.1rem] border-[#212121] shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1),0_-1px_2px_-2px_rgba(0,0,0,0.1)] transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:bg-white/20 before:backdrop-blur-[2px] after:absolute after:inset-0 after:-z-20 after:rounded-[inherit] after:bg-gradient-to-b after:from-white/80 after:to-white/20">
-            <h2 className="text-xl font-libre-bold mb-4">Your Activity</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-xl bg-white/50 p-4 border-[0.1rem] border-[#212121]/10">
-                <h3 className="text-sm text-muted-foreground font-libre-regular mb-1">Total Consultations</h3>
-                <p className="text-3xl font-libre-bold text-primary">{userData.totalChats}</p>
-              </div>
-              <div className="rounded-xl bg-white/50 p-4 border-[0.1rem] border-[#212121]/10">
-                <h3 className="text-sm text-muted-foreground font-libre-regular mb-1">Recent Activity</h3>
-                <p className="text-3xl font-libre-bold text-primary">
-                  {userData.totalChats > 0 ? "Active" : "No activity"}
-                </p>
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-4xl p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Profile Card */}
+            <div className="neu-card">
+              <div className="flex flex-col items-center">
+                <div className="mb-4 relative w-32 h-32 rounded-full overflow-hidden neu-inset">
+                  {userData.image ? (
+                    <Image
+                      src={userData.image}
+                      alt={userData.name}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center neu-text text-4xl neu-title">
+                      {userData.name?.charAt(0).toUpperCase() || "U"}
+                    </div>
+                  )}
+                </div>
+                <h2 className="neu-title neu-2xl">{userData.name}</h2>
+                <p className="neu-text text-muted-foreground mb-6">{userData.email}</p>
+                <div className="neu-text text-sm text-muted-foreground">
+                  Member since {new Date(userData.joinedAt).toLocaleDateString()}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Quick Actions */}
-          <div className="group relative rounded-2xl bg-[#F8F7F4] p-6 border-[0.1rem] border-[#212121] shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1),0_-1px_2px_-2px_rgba(0,0,0,0.1)] transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:bg-white/20 before:backdrop-blur-[2px] after:absolute after:inset-0 after:-z-20 after:rounded-[inherit] after:bg-gradient-to-b after:from-white/80 after:to-white/20">
-            <h2 className="text-xl font-libre-bold mb-4">Quick Actions</h2>
-            <div className="space-y-2">
-              <Link href="/profile/kundali" className="group/item flex items-center justify-between p-4 rounded-xl bg-white/50 border-[0.1rem] border-[#212121]/10 transition-colors hover:bg-white/80">
-                <div className="flex items-center gap-3">
-                  <MessageCircle className="w-5 h-5 text-primary" />
-                  <div>
-                    <h3 className="font-libre-bold">Manage Kundalis</h3>
-                    <p className="text-sm text-muted-foreground font-libre-regular">View and edit your kundali profiles</p>
+            {/* Statistics & Settings */}
+            <div className="md:col-span-2 space-y-6">
+              {/* Statistics */}
+              <div className="neu-card">
+                <h2 className="neu-title neu-xl mb-4">Your Activity</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="neu-inset p-4">
+                    <h3 className="neu-text text-sm text-muted-foreground mb-1">Total Consultations</h3>
+                    <p className="neu-title neu-3xl text-primary">{userData.totalChats}</p>
+                  </div>
+                  <div className="neu-inset p-4">
+                    <h3 className="neu-text text-sm text-muted-foreground mb-1">Recent Activity</h3>
+                    <p className="neu-title neu-3xl text-primary">
+                      {userData.totalChats > 0 ? "Active" : "No activity"}
+                    </p>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground transition-transform group-hover/item:translate-x-1" />
-              </Link>
+              </div>
 
-              <button disabled className="w-full flex items-center justify-between p-4 rounded-xl bg-white/50 border-[0.1rem] border-[#212121]/10 opacity-50 cursor-not-allowed">
-                <div className="flex items-center gap-3">
-                  <Settings className="w-5 h-5 text-primary" />
-                  <div>
-                    <h3 className="font-libre-bold">Account Settings</h3>
-                    <p className="text-sm text-muted-foreground font-libre-regular">Update your account preferences</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
+              {/* Quick Actions */}
+              <div className="neu-card">
+                <h2 className="neu-title neu-xl mb-4">Quick Actions</h2>
+                <div className="space-y-2">
+                  <Link href="/profile/kundali" className="group/item flex items-center justify-between p-4 neu-inset transition-all duration-300 hover:neu-inset-hover">
+                    <div className="flex items-center gap-3">
+                      <MessageCircle className="w-5 h-5 text-primary" />
+                      <div>
+                        <h3 className="neu-title">Manage Kundalis</h3>
+                        <p className="neu-text text-sm text-muted-foreground">View and edit your kundali profiles</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground transition-transform group-hover/item:translate-x-1" />
+                  </Link>
 
-              <button disabled className="w-full flex items-center justify-between p-4 rounded-xl bg-white/50 border-[0.1rem] border-[#212121]/10 opacity-50 cursor-not-allowed">
-                <div className="flex items-center gap-3">
-                  <Bell className="w-5 h-5 text-primary" />
-                  <div>
-                    <h3 className="font-libre-bold">Notifications</h3>
-                    <p className="text-sm text-muted-foreground font-libre-regular">Manage your notification settings</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
+                  <button disabled className="w-full flex items-center justify-between p-4 neu-inset opacity-50 cursor-not-allowed">
+                    <div className="flex items-center gap-3">
+                      <Settings className="w-5 h-5 text-primary" />
+                      <div>
+                        <h3 className="neu-title">Account Settings</h3>
+                        <p className="neu-text text-sm text-muted-foreground">Update your account preferences</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  </button>
 
-              <button disabled className="w-full flex items-center justify-between p-4 rounded-xl bg-white/50 border-[0.1rem] border-[#212121]/10 opacity-50 cursor-not-allowed">
-                <div className="flex items-center gap-3">
-                  <Lock className="w-5 h-5 text-primary" />
-                  <div>
-                    <h3 className="font-libre-bold">Privacy & Security</h3>
-                    <p className="text-sm text-muted-foreground font-libre-regular">Update your security preferences</p>
-                  </div>
+                  <button disabled className="w-full flex items-center justify-between p-4 neu-inset opacity-50 cursor-not-allowed">
+                    <div className="flex items-center gap-3">
+                      <Bell className="w-5 h-5 text-primary" />
+                      <div>
+                        <h3 className="neu-title">Notifications</h3>
+                        <p className="neu-text text-sm text-muted-foreground">Manage your notification settings</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  </button>
+
+                  <button disabled className="w-full flex items-center justify-between p-4 neu-inset opacity-50 cursor-not-allowed">
+                    <div className="flex items-center gap-3">
+                      <Lock className="w-5 h-5 text-primary" />
+                      <div>
+                        <h3 className="neu-title">Privacy & Security</h3>
+                        <p className="neu-text text-sm text-muted-foreground">Update your security preferences</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  </button>
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {error && (
-        <div className="fixed bottom-4 right-4 bg-destructive text-destructive-foreground px-4 py-2 rounded-md shadow-lg">
+        <div className="fixed bottom-4 right-4 neu-error">
           {error}
         </div>
       )}

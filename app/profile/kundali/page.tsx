@@ -128,57 +128,65 @@ export default function KundaliManagementPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center neu-container">
         <Loading size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-libre-bold">Manage Kundalis</h1>
-          <p className="mt-2 text-muted-foreground font-libre-regular">
-            Create and manage your kundali profiles for astrological consultations
-          </p>
+    <div className="fixed inset-0 flex flex-col overflow-hidden neu-container">
+      <header className="px-4 py-6">
+        <div className="mx-auto max-w-4xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="neu-title neu-2xl">Manage Kundalis</h1>
+              <p className="mt-2 neu-text">
+                Create and manage your kundali profiles for astrological consultations
+              </p>
+            </div>
+            <Button 
+              onClick={() => setShowNewKundaliModal(true)}
+              className="neu-button neu-button-hover"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Kundali
+            </Button>
+          </div>
         </div>
-        <Button 
-          onClick={() => setShowNewKundaliModal(true)}
-          className="font-libre-regular"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add New Kundali
-        </Button>
-      </div>
+      </header>
 
-      {kundalis.length === 0 ? (
-        <div className="rounded-2xl bg-[#F8F7F4] p-8 text-center border-[0.1rem] border-[#212121] shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1),0_-1px_2px_-2px_rgba(0,0,0,0.1)]">
-          <h3 className="text-lg font-libre-bold">No Kundalis Found</h3>
-          <p className="mt-2 text-muted-foreground font-libre-regular">
-            Create your first kundali to get started with consultations
-          </p>
-          <Button
-            variant="outline"
-            className="mt-4 font-libre-regular"
-            onClick={() => setShowNewKundaliModal(true)}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Create New Kundali
-          </Button>
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-4xl p-4">
+          {kundalis.length === 0 ? (
+            <div className="neu-card text-center">
+              <h3 className="neu-title neu-lg">No Kundalis Found</h3>
+              <p className="mt-2 neu-text">
+                Create your first kundali to get started with consultations
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4 neu-button neu-button-hover"
+                onClick={() => setShowNewKundaliModal(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create New Kundali
+              </Button>
+            </div>
+          ) : (
+            <div className="neu-grid md:grid-cols-2 lg:grid-cols-3">
+              {kundalis.map((kundali) => (
+                <KundaliCard
+                  key={kundali.id}
+                  kundali={kundali}
+                  onEdit={startEdit}
+                  onDelete={(id) => setShowDeleteConfirm(id)}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {kundalis.map((kundali) => (
-            <KundaliCard
-              key={kundali.id}
-              kundali={kundali}
-              onEdit={startEdit}
-              onDelete={(id) => setShowDeleteConfirm(id)}
-            />
-          ))}
-        </div>
-      )}
+      </div>
 
       {/* Create/Edit Kundali Modal */}
       <Dialog 
@@ -189,12 +197,12 @@ export default function KundaliManagementPage() {
           setNewKundali({ fullName: "", dateOfBirth: "", placeOfBirth: "" });
         }}
       >
-        <DialogContent>
+        <DialogContent className="neu-container">
           <DialogHeader>
-            <DialogTitle className="font-libre-bold">
+            <DialogTitle className="neu-title neu-xl">
               {editingKundali ? "Edit Kundali" : "Create New Kundali"}
             </DialogTitle>
-            <DialogDescription className="font-libre-regular">
+            <DialogDescription className="neu-text">
               {editingKundali 
                 ? "Update the details of your kundali chart"
                 : "Enter the details to create a new kundali chart"}
@@ -202,33 +210,33 @@ export default function KundaliManagementPage() {
           </DialogHeader>
           <form onSubmit={editingKundali ? handleUpdateKundali : handleCreateKundali} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="font-libre-regular">Full Name</Label>
+              <Label htmlFor="fullName" className="neu-text">Full Name</Label>
               <Input
                 id="fullName"
                 value={newKundali.fullName}
                 onChange={(e) => setNewKundali(prev => ({ ...prev, fullName: e.target.value }))}
-                className="font-libre-regular"
+                className="neu-inset w-full"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dateOfBirth" className="font-libre-regular">Date of Birth</Label>
+              <Label htmlFor="dateOfBirth" className="neu-text">Date of Birth</Label>
               <Input
                 id="dateOfBirth"
                 type="date"
                 value={newKundali.dateOfBirth}
                 onChange={(e) => setNewKundali(prev => ({ ...prev, dateOfBirth: e.target.value }))}
-                className="font-libre-regular"
+                className="neu-inset w-full"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="placeOfBirth" className="font-libre-regular">Place of Birth</Label>
+              <Label htmlFor="placeOfBirth" className="neu-text">Place of Birth</Label>
               <Input
                 id="placeOfBirth"
                 value={newKundali.placeOfBirth}
                 onChange={(e) => setNewKundali(prev => ({ ...prev, placeOfBirth: e.target.value }))}
-                className="font-libre-regular"
+                className="neu-inset w-full"
                 required
               />
             </div>
@@ -240,20 +248,22 @@ export default function KundaliManagementPage() {
                   setShowNewKundaliModal(false);
                   setEditingKundali(null);
                 }}
-                className="font-libre-regular"
+                className="neu-button"
               >
                 Cancel
               </Button>
               <Button 
                 type="submit"
                 disabled={isSubmitting}
-                className="font-libre-regular"
+                className="neu-button neu-button-hover"
               >
-                {isSubmitting
-                  ? "Saving..."
-                  : editingKundali
-                  ? "Save Changes"
-                  : "Create Kundali"}
+                {isSubmitting ? (
+                  <Loading size="sm" />
+                ) : editingKundali ? (
+                  "Update Kundali"
+                ) : (
+                  "Create Kundali"
+                )}
               </Button>
             </DialogFooter>
           </form>
@@ -262,13 +272,13 @@ export default function KundaliManagementPage() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog
-        open={showDeleteConfirm !== null}
+        open={!!showDeleteConfirm}
         onOpenChange={() => setShowDeleteConfirm(null)}
       >
-        <DialogContent>
+        <DialogContent className="neu-container">
           <DialogHeader>
-            <DialogTitle className="font-libre-bold">Delete Kundali</DialogTitle>
-            <DialogDescription className="font-libre-regular">
+            <DialogTitle className="neu-title neu-xl">Delete Kundali</DialogTitle>
+            <DialogDescription className="neu-text">
               Are you sure you want to delete this kundali? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
@@ -277,28 +287,21 @@ export default function KundaliManagementPage() {
               type="button"
               variant="outline"
               onClick={() => setShowDeleteConfirm(null)}
-              className="font-libre-regular"
+              className="neu-button"
             >
               Cancel
             </Button>
             <Button
               type="button"
-              variant="destructive"
               disabled={isSubmitting}
               onClick={() => showDeleteConfirm && handleDeleteKundali(showDeleteConfirm)}
-              className="font-libre-regular"
+              className="neu-button neu-button-hover bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isSubmitting ? "Deleting..." : "Delete"}
+              {isSubmitting ? <Loading size="sm" /> : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {error && (
-        <div className="fixed bottom-4 right-4 bg-destructive text-destructive-foreground px-4 py-2 rounded-md shadow-lg">
-          {error}
-        </div>
-      )}
     </div>
   );
 } 

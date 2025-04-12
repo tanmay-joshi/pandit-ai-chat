@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Trash2, Edit2 } from "lucide-react";
-import { Kundali } from "@/types/kundali";
+import { Kundali } from "../types/kundali";
 
 interface KundaliCardProps {
   kundali: Kundali;
@@ -21,7 +21,7 @@ export function KundaliCard({
 }: KundaliCardProps) {
   return (
     <div
-      className={`group relative rounded-2xl bg-[#F8F7F4] p-6 border-[0.1rem] border-[#212121] shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1),0_-1px_2px_-2px_rgba(0,0,0,0.1)] transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:bg-white/20 before:backdrop-blur-[2px] after:absolute after:inset-0 after:-z-20 after:rounded-[inherit] after:bg-gradient-to-b after:from-white/80 after:to-white/20 ${
+      className={`neu-card neu-card-hover group relative ${
         selectable ? 'cursor-pointer' : ''
       } ${selected ? 'ring-2 ring-primary' : ''}`}
       onClick={() => {
@@ -41,7 +41,7 @@ export function KundaliCard({
                 e.stopPropagation();
                 onEdit(kundali);
               }}
-              className="h-8 w-8"
+              className="h-8 w-8 neu-icon"
             >
               <Edit2 className="h-4 w-4" />
             </Button>
@@ -54,7 +54,7 @@ export function KundaliCard({
                 e.stopPropagation();
                 onDelete(kundali.id);
               }}
-              className="h-8 w-8 text-destructive hover:text-destructive"
+              className="h-8 w-8 neu-icon text-destructive hover:text-destructive"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -64,20 +64,20 @@ export function KundaliCard({
 
       {/* Content */}
       <div className="space-y-1 mb-4">
-        <h3 className="text-xl font-libre-bold">{kundali.fullName}</h3>
-        <p className="text-sm text-muted-foreground font-libre-regular">
+        <h3 className="neu-title neu-xl">{kundali.fullName}</h3>
+        <p className="neu-text neu-sm">
           Created on {new Date(kundali.createdAt).toLocaleDateString()}
         </p>
       </div>
-      <div className="space-y-2 font-libre-regular">
-        <p className="flex items-center text-sm">
-          <span className="text-muted-foreground">Birth Date:</span>
-          <span className="ml-2">{new Date(kundali.dateOfBirth).toLocaleString()}</span>
-        </p>
-        <p className="flex items-center text-sm">
-          <span className="text-muted-foreground">Birth Place:</span>
-          <span className="ml-2">{kundali.placeOfBirth}</span>
-        </p>
+      <div className="space-y-2">
+        <div className="neu-inset flex items-center justify-between">
+          <span className="neu-text neu-sm">Birth Date:</span>
+          <span className="neu-text neu-sm">{new Date(kundali.dateOfBirth).toLocaleString()}</span>
+        </div>
+        <div className="neu-inset flex items-center justify-between">
+          <span className="neu-text neu-sm">Birth Place:</span>
+          <span className="neu-text neu-sm">{kundali.placeOfBirth}</span>
+        </div>
       </div>
     </div>
   );

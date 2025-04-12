@@ -25,6 +25,13 @@
     --ring: 346.8 77.2% 49.8%;
     --radius: 0.5rem;
     --font-libre-baskerville: 'Libre Baskerville', serif;
+
+    /* Neumorphic Design System Variables */
+    --neu-background: #F0F0F3;
+    --neu-shadow-light: rgba(255, 255, 255, 0.8);
+    --neu-shadow-dark: rgba(174, 174, 192, 0.4);
+    --neu-shadow-dark-hover: rgba(174, 174, 192, 0.3);
+    --neu-text-primary: #212121;
   }
 
   .dark {
@@ -86,6 +93,108 @@
   /* Custom input styles */
   .input-custom {
     @apply rounded-lg border-2 border-border bg-transparent px-4 py-2 focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none;
+  }
+
+  /* Neumorphic Design System */
+  
+  /* Base Container */
+  .neu-container {
+    @apply bg-[var(--neu-background)] text-[var(--neu-text-primary)];
+  }
+
+  /* Card Variants */
+  .neu-card {
+    @apply rounded-2xl bg-[var(--neu-background)] p-6 shadow-[-.125rem_-.125rem_.25rem_var(--neu-shadow-light),.125rem_.125rem_.25rem_var(--neu-shadow-dark)] transition-shadow duration-300;
+  }
+
+  .neu-card-hover {
+    @apply hover:shadow-[-.0625rem_-.0625rem_.125rem_var(--neu-shadow-light),.0625rem_.0625rem_.125rem_var(--neu-shadow-dark-hover)];
+  }
+
+  /* Button Variants */
+  .neu-button {
+    @apply rounded-xl bg-[var(--neu-background)] px-6 py-3 shadow-[-.125rem_-.125rem_.25rem_var(--neu-shadow-light),.125rem_.125rem_.25rem_var(--neu-shadow-dark)] transition-shadow duration-300;
+  }
+
+  .neu-button-hover {
+    @apply hover:shadow-[-.0625rem_-.0625rem_.125rem_var(--neu-shadow-light),.0625rem_.0625rem_.125rem_var(--neu-shadow-dark-hover)];
+  }
+
+  /* Icon Container */
+  .neu-icon {
+    @apply rounded-2xl bg-[var(--neu-background)] p-4 shadow-[-.0625rem_-.0625rem_.125rem_var(--neu-shadow-light),.0625rem_.0625rem_.125rem_var(--neu-shadow-dark)];
+  }
+
+  /* Avatar Container */
+  .neu-avatar {
+    @apply relative h-14 w-14 overflow-hidden rounded-2xl bg-[var(--neu-background)] shadow-[-.0625rem_-.0625rem_.125rem_var(--neu-shadow-light),.0625rem_.0625rem_.125rem_var(--neu-shadow-dark)];
+  }
+
+  /* Inset Elements (for badges, counts, etc.) */
+  .neu-inset {
+    @apply rounded-xl bg-[var(--neu-background)] px-3 py-1 shadow-[inset_-.03125rem_-.03125rem_.0625rem_var(--neu-shadow-light),inset_.03125rem_.03125rem_.0625rem_var(--neu-shadow-dark)];
+  }
+
+  /* Typography */
+  .neu-title {
+    @apply font-libre-bold text-[var(--neu-text-primary)];
+  }
+
+  .neu-text {
+    @apply font-libre-regular text-muted-foreground;
+  }
+
+  /* Size Variants */
+  .neu-sm {
+    @apply text-sm;
+  }
+
+  .neu-base {
+    @apply text-base;
+  }
+
+  .neu-lg {
+    @apply text-lg;
+  }
+
+  .neu-xl {
+    @apply text-xl;
+  }
+
+  .neu-2xl {
+    @apply text-2xl;
+  }
+
+  /* Spacing Utilities */
+  .neu-p {
+    @apply p-6;
+  }
+
+  .neu-px {
+    @apply px-6;
+  }
+
+  .neu-py {
+    @apply py-3;
+  }
+
+  /* Grid Layout */
+  .neu-grid {
+    @apply grid gap-6;
+  }
+
+  /* Flex Layout */
+  .neu-flex {
+    @apply flex items-start gap-4;
+  }
+
+  /* States */
+  .neu-disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .neu-loading {
+    @apply animate-pulse;
   }
 }
 
