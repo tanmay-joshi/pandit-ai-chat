@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatMessages } from "@/components/chat/ChatMessages";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { InsufficientCreditsDialog } from "@/components/dialogs/InsufficientCreditsDialog";
 import { Chat } from "@/types/chat";
 
 enum SelectionStep {
@@ -26,6 +27,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<SelectionStep>(SelectionStep.Initial);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const [showCreditsDialog, setShowCreditsDialog] = useState(false);
+  const [creditsInfo, setCreditsInfo] = useState({ required: 0, available: 0 });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch chat data when component mounts
@@ -61,6 +64,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     if (!input.trim() || !chat) return;
 
     setSending(true);
+    setError(null);
+    
     try {
       const res = await fetch(`/api/chat/${params.id}/messages`, {
         method: "POST",
@@ -68,7 +73,19 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         body: JSON.stringify({ content: input.trim() }),
       });
 
-      if (!res.ok) throw new Error("Failed to send message");
+      if (!res.ok) {
+        const data = await res.json();
+        if (res.status === 402) { // Payment Required
+          setCreditsInfo({
+            required: data.required,
+            available: data.balance
+          });
+          setShowCreditsDialog(true);
+          return;
+        }
+        throw new Error(data.error || "Failed to send message");
+      }
+
       const newMessage = await res.json();
       
       setChat(prev => prev ? {
@@ -86,7 +103,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   if (status === "loading" || loading) {
     return (
       <div className="flex h-[100vh] items-center justify-center">
-        <div className="text-xl">Loading...</div>
+        <div className="text-xl font-libre-regular">Loading...</div>
       </div>
     );
   }
@@ -94,8 +111,11 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   if (!chat) {
     return (
       <div className="flex h-[100vh] flex-col items-center justify-center">
-        <div className="text-xl">Chat not found</div>
-        <button onClick={() => router.push("/chat")} className="mt-4 text-blue-600 hover:underline">
+        <div className="text-xl font-libre-regular">Chat not found</div>
+        <button 
+          onClick={() => router.push("/chat")} 
+          className="mt-4 text-primary hover:underline font-libre-regular"
+        >
           Back to chats
         </button>
       </div>
@@ -130,8 +150,14 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         suggestedQuestions={suggestedQuestions}
         onSuggestedQuestionClick={(question) => {
           setInput(question);
-          // Optionally auto-send the question
         }}
+      />
+
+      <InsufficientCreditsDialog
+        isOpen={showCreditsDialog}
+        onClose={() => setShowCreditsDialog(false)}
+        requiredCredits={creditsInfo.required}
+        availableCredits={creditsInfo.available}
       />
     </div>
   );
