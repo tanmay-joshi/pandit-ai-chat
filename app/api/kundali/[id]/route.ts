@@ -9,36 +9,24 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
-    
-    if (!id) {
-      return NextResponse.json({ error: "Kundali ID is required" }, { status: 400 });
-    }
-
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get the kundali and verify ownership
     const kundali = await prisma.kundali.findUnique({
-      where: { id },
-      include: { user: { select: { email: true } } }
+      where: { 
+        id: params.id,
+        user: { email: session.user.email }
+      },
     });
 
     if (!kundali) {
       return NextResponse.json({ error: "Kundali not found" }, { status: 404 });
     }
 
-    // Verify ownership
-    if (kundali.user.email !== session.user.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
-    // Remove user field from response
-    const { user, ...kundaliData } = kundali;
-    return NextResponse.json(kundaliData);
+    return NextResponse.json(kundali);
   } catch (error) {
     console.error("Error fetching kundali:", error);
     return NextResponse.json(
@@ -54,44 +42,41 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
-    
-    if (!id) {
-      return NextResponse.json({ error: "Kundali ID is required" }, { status: 400 });
-    }
-
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get the kundali and verify ownership
-    const kundali = await prisma.kundali.findUnique({
-      where: { id },
-      include: { user: { select: { email: true } } }
-    });
-
-    if (!kundali) {
-      return NextResponse.json({ error: "Kundali not found" }, { status: 404 });
-    }
-
-    // Verify ownership
-    if (kundali.user.email !== session.user.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
-    // Get the update data
     const body = await req.json();
     const { fullName, dateOfBirth, placeOfBirth } = body;
 
-    // Update the kundali
+    if (!fullName || !dateOfBirth || !placeOfBirth) {
+      return NextResponse.json(
+        { error: "Full name, date of birth and place of birth are required" },
+        { status: 400 }
+      );
+    }
+
+    // Verify ownership
+    const existingKundali = await prisma.kundali.findUnique({
+      where: { 
+        id: params.id,
+        user: { email: session.user.email }
+      },
+    });
+
+    if (!existingKundali) {
+      return NextResponse.json({ error: "Kundali not found" }, { status: 404 });
+    }
+
+    // Update kundali
     const updatedKundali = await prisma.kundali.update({
-      where: { id },
+      where: { id: params.id },
       data: {
-        ...(fullName && { fullName }),
-        ...(dateOfBirth && { dateOfBirth: new Date(dateOfBirth) }),
-        ...(placeOfBirth && { placeOfBirth }),
+        fullName,
+        dateOfBirth: new Date(dateOfBirth),
+        placeOfBirth,
       },
     });
 
@@ -111,36 +96,27 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
-    
-    if (!id) {
-      return NextResponse.json({ error: "Kundali ID is required" }, { status: 400 });
-    }
-
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get the kundali and verify ownership
-    const kundali = await prisma.kundali.findUnique({
-      where: { id },
-      include: { user: { select: { email: true } } }
+    // Verify ownership
+    const existingKundali = await prisma.kundali.findUnique({
+      where: { 
+        id: params.id,
+        user: { email: session.user.email }
+      },
     });
 
-    if (!kundali) {
+    if (!existingKundali) {
       return NextResponse.json({ error: "Kundali not found" }, { status: 404 });
     }
 
-    // Verify ownership
-    if (kundali.user.email !== session.user.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
-    // Delete the kundali
+    // Delete kundali
     await prisma.kundali.delete({
-      where: { id },
+      where: { id: params.id },
     });
 
     return NextResponse.json({ success: true });
