@@ -18,13 +18,13 @@ interface AgentCardProps {
 export function AgentCard({ agent, isSelected, onSelect, showAddButton = true }: AgentCardProps) {
   return (
     <div 
-      className={`relative group overflow-hidden rounded-3xl transition-all duration-300 cursor-pointer
+      className={`relative group overflow-hidden rounded-2xl transition-all duration-300 cursor-pointer
         ${isSelected ? 'ring-2 ring-primary' : 'hover:ring-1 hover:ring-primary/50'}
       `}
       onClick={() => onSelect?.(agent)}
     >
       {/* Background Image */}
-      <div className="relative w-full aspect-[3/4]">
+      <div className="relative w-full aspect-square">
         {agent.avatar ? (
           <Image
             src={agent.avatar}
@@ -37,13 +37,13 @@ export function AgentCard({ agent, isSelected, onSelect, showAddButton = true }:
         )}
         
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
       </div>
 
       {/* Content */}
-      <div className="absolute inset-0 p-6 flex flex-col justify-end text-white">
+      <div className="absolute inset-0 p-4 flex flex-col justify-end text-white">
         <div className="space-y-2">
-          <h3 className="text-2xl font-semibold tracking-tight">
+          <h3 className="text-xl font-semibold tracking-tight">
             {agent.name}
           </h3>
           
@@ -56,8 +56,9 @@ export function AgentCard({ agent, isSelected, onSelect, showAddButton = true }:
           {/* Add Member Button */}
           {showAddButton && (
             <Button 
-              className="mt-4 w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border-white/20"
+              className="mt-3 w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border-white/20"
               variant="outline"
+              size="sm"
             >
               Start Chat
             </Button>
