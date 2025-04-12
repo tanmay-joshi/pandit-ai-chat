@@ -7,6 +7,7 @@ import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatMessages } from "@/components/chat/ChatMessages";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { InsufficientCreditsDialog } from "@/components/dialogs/InsufficientCreditsDialog";
+import { Loading } from "@/components/ui/loading";
 import { Chat } from "@/types/chat";
 
 enum SelectionStep {
@@ -102,19 +103,19 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex h-[100vh] items-center justify-center">
-        <div className="text-xl font-libre-regular">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center neu-container">
+        <Loading size="lg" />
       </div>
     );
   }
 
   if (!chat) {
     return (
-      <div className="flex h-[100vh] flex-col items-center justify-center">
-        <div className="text-xl font-libre-regular">Chat not found</div>
+      <div className="flex min-h-screen flex-col items-center justify-center neu-container">
+        <h1 className="neu-title neu-xl">Chat not found</h1>
         <button 
           onClick={() => router.push("/chat")} 
-          className="mt-4 text-primary hover:underline font-libre-regular"
+          className="mt-4 neu-text text-primary hover:underline"
         >
           Back to chats
         </button>
@@ -123,7 +124,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-gray-50">
+    <div className="fixed inset-0 flex flex-col overflow-hidden neu-container">
       <ChatHeader 
         title={chat.title}
         agent={chat.agent}
@@ -159,6 +160,12 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         requiredCredits={creditsInfo.required}
         availableCredits={creditsInfo.available}
       />
+
+      {error && (
+        <div className="fixed bottom-4 right-4 neu-error">
+          {error}
+        </div>
+      )}
     </div>
   );
 }

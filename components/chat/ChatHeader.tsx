@@ -13,19 +13,19 @@ export function ChatHeader({ title, agent, kundalis }: ChatHeaderProps) {
   return (
     <header className="px-4 py-3">
       <div className="mx-auto max-w-4xl">
-        <div className="bg-black rounded-[24px] text-white shadow-lg">
-          <div className="p-4 flex items-center gap-4">
+        <div className="neu-card-secondary neu-card-secondary-hover py-2">
+          <div className="flex items-center gap-4">
             {/* Back Button */}
             <Link
               href="/chat"
-              className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors"
+              className="flex items-center gap-1.5 text-white hover:text-white/90 transition-colors"
             >
               <ChevronLeft className="h-5 w-5" />
             </Link>
 
             {/* Agent Profile */}
             {agent?.avatar ? (
-              <div className="relative h-10 w-10 rounded-xl overflow-hidden">
+              <div className="relative h-10 w-10 rounded-xl overflow-hidden neu-inset">
                 <Image
                   src={agent.avatar}
                   alt={agent.name}
@@ -34,17 +34,17 @@ export function ChatHeader({ title, agent, kundalis }: ChatHeaderProps) {
                 />
               </div>
             ) : (
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center">
-                <span className="text-lg font-libre-bold">{agent?.name?.charAt(0) || 'P'}</span>
+              <div className="h-10 w-10 rounded-xl neu-inset flex items-center justify-center">
+                <span className="neu-title neu-lg text-white">{agent?.name?.charAt(0) || 'P'}</span>
               </div>
             )}
 
             {/* Chat Info */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-base font-libre-bold truncate">
+              <h1 className="neu-title text-white truncate">
                 {agent?.name || 'Pandit AI'}
               </h1>
-              <p className="text-sm font-libre-regular text-white/70 truncate">{title}</p>
+              <p className="text-sm text-white/80 truncate">{title}</p>
             </div>
 
             {/* Kundalis */}
@@ -54,17 +54,17 @@ export function ChatHeader({ title, agent, kundalis }: ChatHeaderProps) {
                   {kundalis.slice(0, 3).map((kundali, idx) => (
                     <div
                       key={kundali.id}
-                      className="relative h-8 w-8 rounded-full border-2 border-black bg-white/10 backdrop-blur-sm flex items-center justify-center"
+                      className="relative h-8 w-8 rounded-full neu-inset flex items-center justify-center bg-white/10 backdrop-blur-sm"
                       style={{ zIndex: kundalis.length - idx }}
                     >
-                      <span className="text-sm font-libre-regular">
+                      <span className="text-sm text-white font-medium">
                         {kundali.fullName[0]}
                       </span>
                     </div>
                   ))}
                   {kundalis.length > 3 && (
-                    <div className="relative h-8 w-8 rounded-full border-2 border-black bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                      <span className="text-sm font-libre-regular">
+                    <div className="relative h-8 w-8 rounded-full neu-inset flex items-center justify-center bg-white/10 backdrop-blur-sm">
+                      <span className="text-sm text-white font-medium">
                         +{kundalis.length - 3}
                       </span>
                     </div>

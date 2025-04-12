@@ -43,20 +43,20 @@ export function ChatInput({
               placeholder={!isDisabled 
                 ? `Ask ${agent ? agent.name : 'anything'}...` 
                 : "Please complete the setup process first..."}
-              className="min-h-[44px] flex-1 resize-none rounded-xl border-0 bg-gray-100 px-4 py-3 focus:ring-0"
+              className="min-h-[44px] flex-1 resize-none rounded-xl neu-inset px-4 py-3 focus:ring-0"
               disabled={isDisabled}
             />
             <Button
               type="submit"
               size="icon"
-              className="h-[44px] w-[44px] rounded-xl bg-black hover:bg-black/90"
+              className="h-[44px] w-[44px] rounded-xl neu-button neu-button-hover"
               disabled={isDisabled || !input.trim()}
             >
               <Send className="h-4 w-4" />
               <span className="sr-only">Send</span>
             </Button>
           </form>
-          <div className="mt-2 text-xs text-gray-500">
+          <div className="mt-2 neu-text text-xs text-muted-foreground">
             {isDisabled ? (
               step === 'initial' ? "Loading options..." : 
               step === 'agent' ? "Please select a Pandit to continue" : 

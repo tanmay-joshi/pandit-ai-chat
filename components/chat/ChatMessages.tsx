@@ -22,14 +22,14 @@ export function ChatMessages({
   onScrollBottom 
 }: ChatMessagesProps) {
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-50">
+    <div className="flex-1 overflow-y-auto">
       <div className="mx-auto max-w-4xl p-4">
         {/* Error Message */}
         {error && (
-          <div className="mb-4 rounded-md bg-red-50 p-4 text-red-700">
+          <div className="mb-4 neu-error">
             <p>{error}</p>
             {error.includes("Insufficient credits") && (
-              <Link href="/wallet/recharge" className="mt-2 inline-block font-medium text-red-700 hover:underline">
+              <Link href="/wallet/recharge" className="mt-2 inline-block neu-text text-primary hover:underline">
                 Recharge your wallet
               </Link>
             )}
@@ -39,7 +39,7 @@ export function ChatMessages({
         {/* Empty State */}
         {messages.length === 0 ? (
           <div className="flex h-[calc(100vh-200px)] flex-col items-center justify-center text-center">
-            <div className="mb-4 rounded-full bg-blue-100 p-3">
+            <div className="mb-4 rounded-full neu-inset p-3">
               {agent && agent.avatar ? (
                 <div className="relative h-16 w-16 overflow-hidden rounded-full">
                   <Image
@@ -51,22 +51,22 @@ export function ChatMessages({
                   />
                 </div>
               ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-200">
-                  <span className="text-2xl font-bold text-blue-700">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full neu-inset">
+                  <span className="neu-title neu-2xl text-primary">
                     {agent ? agent.name.charAt(0) : "P"}
                   </span>
                 </div>
               )}
             </div>
-            <h2 className="mb-2 text-xl font-medium">
+            <h2 className="mb-2 neu-title neu-xl">
               {agent ? `Welcome to your consultation with ${agent.name}` : "Start your conversation"}
             </h2>
             {agent && (
-              <p className="mb-3 max-w-md text-center text-gray-600">
+              <p className="mb-3 max-w-md text-center neu-text text-muted-foreground">
                 {agent.description}
               </p>
             )}
-            <p className="text-center text-sm text-gray-500">
+            <p className="text-center neu-text text-sm text-muted-foreground">
               Type your first message below to begin.
             </p>
           </div>
@@ -82,20 +82,24 @@ export function ChatMessages({
                 <div
                   className={`max-w-[75%] rounded-2xl px-4 py-2 ${
                     message.role === "user"
-                      ? "bg-black text-white"
-                      : "bg-white shadow-sm ring-1 ring-gray-900/5"
+                      ? "neu-inset-2 text-black"
+                      : "neu-card"
                   }`}
                 >
-                  <div className="whitespace-pre-wrap">
+                  <div className="whitespace-pre-wrap neu-text">
                     {message.content || (message.role === "assistant" && sending ? (
                       <div className="flex items-center gap-1">
-                        <div className="h-2 w-2 animate-pulse rounded-full bg-gray-300"></div>
-                        <div className="h-2 w-2 animate-pulse rounded-full bg-gray-300 delay-100"></div>
-                        <div className="h-2 w-2 animate-pulse rounded-full bg-gray-300 delay-200"></div>
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-primary/50"></div>
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-primary/50 delay-100"></div>
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-primary/50 delay-200"></div>
                       </div>
                     ) : '')}
                   </div>
-                  <div className="mt-1 text-right text-xs opacity-50">
+                  <div className={`mt-1 text-right neu-text text-xs ${
+                    message.role === "user" 
+                      ? "text-black/50" 
+                      : "text-muted-foreground"
+                  }`}>
                     {new Date(message.createdAt).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",

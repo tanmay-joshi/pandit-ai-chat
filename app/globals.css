@@ -107,8 +107,50 @@
     @apply rounded-2xl bg-[var(--neu-background)] p-6 shadow-[-.125rem_-.125rem_.25rem_var(--neu-shadow-light),.125rem_.125rem_.25rem_var(--neu-shadow-dark)] transition-shadow duration-300;
   }
 
+  .neu-card-secondary {
+    @apply rounded-2xl p-6 transition-all duration-300;
+    background: linear-gradient(135deg, #FED9B7 0%, #F07167 100%);
+    box-shadow: 
+      -0.125rem -0.125rem 0.25rem rgba(254, 217, 183, 0.6),
+      0.125rem 0.125rem 0.25rem rgba(240, 113, 103, 0.6),
+      inset -0.0625rem -0.0625rem 0.125rem rgba(255, 255, 255, 0.2),
+      inset 0.0625rem 0.0625rem 0.125rem rgba(240, 113, 103, 0.1);
+  }
+
+  .neu-card-tertiary {
+    @apply rounded-2xl p-6 transition-all duration-300;
+    background: linear-gradient(135deg, #00AFB9 0%, #FED9B7 100%);
+    box-shadow: 
+      -0.25rem -0.25rem 0.5rem rgba(0, 175, 185, 0.3),
+      0.25rem 0.25rem 0.5rem rgba(254, 217, 183, 0.3),
+      inset -0.125rem -0.125rem 0.25rem rgba(255, 255, 255, 0.1),
+      inset 0.125rem 0.125rem 0.25rem rgba(0, 175, 185, 0.05);
+  }
+
   .neu-card-hover {
     @apply hover:shadow-[-.0625rem_-.0625rem_.125rem_var(--neu-shadow-light),.0625rem_.0625rem_.125rem_var(--neu-shadow-dark-hover)];
+  }
+
+  .neu-card-secondary-hover {
+    &:hover {
+      box-shadow: 
+        -0.0625rem -0.0625rem 0.125rem rgba(254, 217, 183, 0.4),
+        0.0625rem 0.0625rem 0.125rem rgba(240, 113, 103, 0.4),
+        inset -0.03125rem -0.03125rem 0.0625rem rgba(255, 255, 255, 0.15),
+        inset 0.03125rem 0.03125rem 0.0625rem rgba(240, 113, 103, 0.05);
+      transform: translateY(-1px);
+    }
+  }
+
+  .neu-card-tertiary-hover {
+    &:hover {
+      box-shadow: 
+        -0.125rem -0.125rem 0.25rem rgba(0, 175, 185, 0.4),
+        0.125rem 0.125rem 0.25rem rgba(254, 217, 183, 0.4),
+        inset -0.0625rem -0.0625rem 0.125rem rgba(255, 255, 255, 0.1),
+        inset 0.0625rem 0.0625rem 0.125rem rgba(0, 175, 185, 0.05);
+      transform: translateY(-1px);
+    }
   }
 
   /* Button Variants */
@@ -133,6 +175,15 @@
   /* Inset Elements (for badges, counts, etc.) */
   .neu-inset {
     @apply rounded-xl bg-[var(--neu-background)] px-3 py-1 shadow-[inset_-.03125rem_-.03125rem_.0625rem_var(--neu-shadow-light),inset_.03125rem_.03125rem_.0625rem_var(--neu-shadow-dark)];
+  }
+
+  .neu-inset-2 {
+    @apply rounded-xl bg-[var(--neu-background)] px-3 py-1;
+    box-shadow: 
+      inset -0.125rem -0.125rem 0.25rem var(--neu-shadow-light),
+      inset 0.125rem 0.125rem 0.25rem var(--neu-shadow-dark),
+      inset -0.0625rem -0.0625rem 0.125rem var(--neu-shadow-light),
+      inset 0.0625rem 0.0625rem 0.125rem var(--neu-shadow-dark);
   }
 
   /* Typography */
