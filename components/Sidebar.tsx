@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
-import { Menu, User, Wallet, MessageSquare, Plus, Home, ChevronLeft, ChevronRight } from "lucide-react"
+import { Menu, User, Wallet, MessageSquare, Plus, Home, ChevronLeft, ChevronRight, BookOpen } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { signIn, signOut, useSession } from "next-auth/react"
 import Link from "next/link"
@@ -149,6 +149,17 @@ export function Sidebar() {
               >
                 <User className="h-4 w-4" />
                 {isExpanded && <span>Profile</span>}
+              </Link>
+              <Link href="/profile/kundali" 
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                  pathname === "/profile/kundali" 
+                    ? "bg-secondary text-secondary-foreground" 
+                    : "hover:bg-secondary/50"
+                }`}
+                onClick={() => setIsOpen(false)}
+              >
+                <BookOpen className="h-4 w-4" />
+                {isExpanded && <span>Kundalis</span>}
               </Link>
               <Link href="/wallet" 
                 className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
