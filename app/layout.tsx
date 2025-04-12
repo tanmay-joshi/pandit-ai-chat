@@ -1,11 +1,16 @@
-import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { NavigationBar } from "@/components/NavigationBar";
 import { cn } from "@/lib/utils";
 import { Providers } from "@/components/Providers";
+import { Libre_Baskerville } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const libreBaskerville = Libre_Baskerville({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-libre-baskerville",
+});
 
 export default function RootLayout({
   children,
@@ -16,7 +21,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={cn(
         "min-h-screen bg-background antialiased",
-        inter.className
+        libreBaskerville.variable
       )}>
         <Providers>
           <NavigationBar />

@@ -35,16 +35,16 @@ export function ChatHeader({ title, agent, kundalis }: ChatHeaderProps) {
               </div>
             ) : (
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center">
-                <span className="text-lg font-medium">{agent?.name?.charAt(0) || 'P'}</span>
+                <span className="text-lg font-libre-bold">{agent?.name?.charAt(0) || 'P'}</span>
               </div>
             )}
 
             {/* Chat Info */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-base font-semibold truncate">
+              <h1 className="text-base font-libre-bold truncate">
                 {agent?.name || 'Pandit AI'}
               </h1>
-              <p className="text-sm text-white/70 truncate">{title}</p>
+              <p className="text-sm font-libre-regular text-white/70 truncate">{title}</p>
             </div>
 
             {/* Kundalis */}
@@ -57,14 +57,14 @@ export function ChatHeader({ title, agent, kundalis }: ChatHeaderProps) {
                       className="relative h-8 w-8 rounded-full border-2 border-black bg-white/10 backdrop-blur-sm flex items-center justify-center"
                       style={{ zIndex: kundalis.length - idx }}
                     >
-                      <span className="text-sm font-medium">
+                      <span className="text-sm font-libre-regular">
                         {kundali.fullName[0]}
                       </span>
                     </div>
                   ))}
                   {kundalis.length > 3 && (
                     <div className="relative h-8 w-8 rounded-full border-2 border-black bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                      <span className="text-sm font-medium">
+                      <span className="text-sm font-libre-regular">
                         +{kundalis.length - 3}
                       </span>
                     </div>

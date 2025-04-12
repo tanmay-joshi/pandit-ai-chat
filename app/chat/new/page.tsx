@@ -170,9 +170,6 @@ export default function NewChatPage() {
           <h1 className="text-4xl font-bold tracking-tight text-foreground mb-4">
             Begin Your Spiritual Journey
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Connect with our AI-powered spiritual guides for personalized insights into your life's path
-          </p>
         </div>
 
         {step === SelectionStep.SelectAgent && (
