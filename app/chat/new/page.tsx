@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loading } from "@/components/ui/loading";
 import { Plus, ArrowLeft, Star, Clock, Users } from "lucide-react";
+import { AgentCard } from "@/components/AgentCard";
 
 type Agent = {
   id: string;
@@ -176,47 +177,14 @@ export default function NewChatPage() {
 
         {step === SelectionStep.SelectAgent && (
           <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {agents.map((agent) => (
-                <button
+                <AgentCard
                   key={agent.id}
-                  onClick={() => handleAgentSelect(agent)}
-                  className="group relative bg-card hover:bg-accent rounded-xl p-6 text-left transition-all duration-200 hover:shadow-lg border border-border hover:border-primary/50"
-                >
-                  <div className="flex items-start gap-4">
-                    {agent.avatar ? (
-                      <Image
-                        src={agent.avatar}
-                        alt={agent.name}
-                        width={80}
-                        height={80}
-                        className="rounded-full"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center text-2xl font-bold text-primary-foreground">
-                        {agent.name.charAt(0)}
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
-                        {agent.name}
-                      </h3>
-                      <p className="text-muted-foreground mb-4">{agent.description}</p>
-                      {agent.expertise && (
-                        <div className="flex flex-wrap gap-2">
-                          {agent.expertise.map((exp, index) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
-                            >
-                              {exp}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </button>
+                  agent={agent}
+                  isSelected={selectedAgent?.id === agent.id}
+                  onSelect={handleAgentSelect}
+                />
               ))}
             </div>
           </div>
