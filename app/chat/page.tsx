@@ -6,143 +6,152 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { Plus, MessageSquare, Calendar } from "lucide-react";
+import { Chat } from "@/types/chat";
+import { Loading } from "@/components/ui/loading";
 
-type Agent = {
-  id: string;
-  name: string;
-  description: string;
-  avatar: string | null;
-  messageCost: number;
-  tags?: string | null;
-};
-
-type Kundali = {
-  id: string;
-  fullName: string;
-};
-
-type Chat = {
-  id: string;
-  title: string;
-  updatedAt: string;
-  agent: Agent | null;
-  kundalis: Kundali[] | null;
-};
-
-export default function ChatPage() {
+export default function ChatsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/auth/signin");
+      router.push("/sign-in");
+      return;
+    }
+
+    async function fetchChats() {
+      try {
+        const response = await fetch("/api/chat");
+        if (!response.ok) {
+          throw new Error("Failed to fetch chats");
+        }
+        const data = await response.json();
+        setChats(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load chats");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (status === "authenticated") {
+      fetchChats();
     }
   }, [status, router]);
 
-  // Fetch user's chats
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetch("/api/chat")
-        .then((res) => res.json())
-        .then((data) => {
-          setChats(data);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Failed to fetch chats:", error);
-          setLoading(false);
-        });
-    }
-  }, [status]);
-
   if (status === "loading" || loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="fixed inset-0 flex items-center justify-center neu-container">
+        <Loading size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="mb-4 text-3xl font-bold">Your Conversations</h1>
-      
-      <div className="flex items-center justify-between mb-6">
-        <Link href="/chat/new">
-          <Button className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Start New Chat
-          </Button>
-        </Link>
+    <div className="fixed inset-0 flex flex-col overflow-hidden neu-container">
+      {/* Header */}
+      <header className="px-4 py-6">
+        <div className="mx-auto max-w-4xl">
+          <div className="flex items-center justify-between">
+            <h1 className="neu-title neu-2xl">Your Consultations</h1>
+            <Button 
+              onClick={() => router.push("/chat/new")} 
+              className="neu-button neu-button-hover"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Consultation
+            </Button>
+          </div>
+        </div>
+      </header>
 
-        <Link
-          href="/kundali"
-          className="text-blue-600 hover:underline"
-        >
-          Manage Kundalis
-        </Link>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-        {chats.length > 0 ? (
-          chats.map((chat) => (
-            <Link key={chat.id} href={`/chat/${chat.id}`}>
-              <div className="cursor-pointer rounded-lg border border-gray-200 p-4 shadow-sm transition hover:shadow-md">
-                <h2 className="mb-2 text-xl font-semibold">{chat.title}</h2>
-                {chat.agent && (
-                  <div className="flex items-center mb-2">
-                    {chat.agent.avatar ? (
-                      <div className="relative w-5 h-5 mr-1 rounded-full overflow-hidden">
-                        <Image 
-                          src={chat.agent.avatar} 
-                          alt={chat.agent.name}
-                          width={20}
-                          height={20}
-                          className="object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-5 h-5 mr-1 rounded-full bg-blue-200 flex items-center justify-center">
-                        <span className="text-blue-700 text-xs font-bold">{chat.agent.name.charAt(0)}</span>
+      {/* Chat List */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-4xl p-4">
+          {error ? (
+            <div className="neu-card text-red-700">
+              {error}
+            </div>
+          ) : chats.length === 0 ? (
+            <div className="neu-card flex flex-col items-center justify-center text-center">
+              <div className="mb-6 neu-icon">
+                <MessageSquare className="h-8 w-8 text-[#212121]" />
+              </div>
+              <h2 className="mb-3 neu-title neu-xl">No consultations yet</h2>
+              <p className="mb-6 neu-text">
+                Start your first consultation with our AI-powered spiritual guides
+              </p>
+              <Button 
+                onClick={() => router.push("/chat/new")} 
+                className="neu-button neu-button-hover"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Start New Consultation
+              </Button>
+            </div>
+          ) : (
+            <div className="neu-grid">
+              {chats.map((chat) => (
+                <Link
+                  key={chat.id}
+                  href={`/chat/${chat.id}`}
+                  className="neu-card neu-card-hover"
+                >
+                  <div className="neu-flex">
+                    {/* Agent Avatar */}
+                    {chat.agent && (
+                      <div className="flex-shrink-0">
+                        {chat.agent.avatar ? (
+                          <div className="neu-avatar">
+                            <Image
+                              src={chat.agent.avatar}
+                              alt={chat.agent.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="neu-avatar flex items-center justify-center">
+                            <span className="neu-title neu-xl">
+                              {chat.agent.name.charAt(0)}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
-                    <span className="text-sm text-blue-700">{chat.agent.name}</span>
+
+                    {/* Chat Info */}
+                    <div className="flex-1 space-y-2">
+                      <h3 className="neu-title">{chat.title}</h3>
+                      {chat.agent && (
+                        <p className="neu-text neu-sm">
+                          with {chat.agent.name}
+                        </p>
+                      )}
+                      {chat.messages && (
+                        <div className="neu-inset neu-text neu-sm">
+                          {chat.messages.length} messages
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Date */}
+                    <div className="neu-inset neu-text neu-sm flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        {new Date(chat.messages?.[0]?.createdAt || chat.createdAt || Date.now()).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
-                )}
-                {chat.kundalis && chat.kundalis.length > 0 && (
-                  <div className="text-xs text-gray-600 mb-2">
-                    {chat.kundalis.length === 1 
-                      ? `Kundali: ${chat.kundalis[0].fullName}`
-                      : `Kundalis: ${chat.kundalis.length} charts`}
-                  </div>
-                )}
-                <p className="text-sm text-gray-500">
-                  {formatDate(chat.updatedAt)}
-                </p>
-              </div>
-            </Link>
-          ))
-        ) : (
-          <div className="col-span-full rounded-lg border border-gray-200 p-8 text-center">
-            <p className="text-gray-600">You don't have any chats yet.</p>
-            <p className="mt-2 text-gray-500">
-              Start a new conversation to chat with an AI assistant.
-            </p>
-            <div className="mt-4">
-              <Link href="/chat/new">
-                <Button className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Start New Chat
-                </Button>
-              </Link>
+                </Link>
+              ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

@@ -16,9 +16,9 @@ export default function SuggestedQuestions({
   }
 
   return (
-    <div className="p-3 mb-2 border-t border-gray-200 bg-gray-50">
+    <div className="p-3 mb-2 border-t border-gray-200 neu-inset">
       <div className="flex items-center mb-2">
-        <p className="text-xs text-gray-500 font-medium">
+        <p className="text-xs neu-text font-medium">
           {isLoading ? "Loading suggestions..." : "Suggested questions:"}
         </p>
       </div>
@@ -27,7 +27,7 @@ export default function SuggestedQuestions({
           <button
             key={index}
             onClick={() => onQuestionClick(question)}
-            className="text-xs bg-white hover:bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full transition-colors border border-gray-200 shadow-sm"
+            className="text-xs neu-button neu-button-hover px-3 py-1.5 rounded-full transition-colors"
             disabled={isLoading}
           >
             {question}
