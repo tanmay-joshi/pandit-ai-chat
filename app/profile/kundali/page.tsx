@@ -8,17 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loading } from "@/components/ui/loading";
-import { Plus, Trash2, Edit2 } from "lucide-react";
-import { formatDate } from "@/lib/utils";
-
-type Kundali = {
-  id: string;
-  fullName: string;
-  dateOfBirth: string;
-  placeOfBirth: string;
-  createdAt: string;
-  updatedAt: string;
-};
+import { Plus } from "lucide-react";
+import { KundaliCard } from "@/components/KundaliCard";
+import type { Kundali } from "@/types/kundali";
 
 export default function KundaliManagementPage() {
   const { data: session, status } = useSession();
@@ -146,26 +138,29 @@ export default function KundaliManagementPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Manage Kundalis</h1>
-          <p className="mt-2 text-muted-foreground">
+          <h1 className="text-3xl font-libre-bold">Manage Kundalis</h1>
+          <p className="mt-2 text-muted-foreground font-libre-regular">
             Create and manage your kundali profiles for astrological consultations
           </p>
         </div>
-        <Button onClick={() => setShowNewKundaliModal(true)}>
+        <Button 
+          onClick={() => setShowNewKundaliModal(true)}
+          className="font-libre-regular"
+        >
           <Plus className="mr-2 h-4 w-4" />
           Add New Kundali
         </Button>
       </div>
 
       {kundalis.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border p-8 text-center">
-          <h3 className="text-lg font-semibold">No Kundalis Found</h3>
-          <p className="mt-2 text-muted-foreground">
+        <div className="rounded-2xl bg-[#F8F7F4] p-8 text-center border-[0.1rem] border-[#212121] shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1),0_-1px_2px_-2px_rgba(0,0,0,0.1)]">
+          <h3 className="text-lg font-libre-bold">No Kundalis Found</h3>
+          <p className="mt-2 text-muted-foreground font-libre-regular">
             Create your first kundali to get started with consultations
           </p>
           <Button
             variant="outline"
-            className="mt-4"
+            className="mt-4 font-libre-regular"
             onClick={() => setShowNewKundaliModal(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -173,40 +168,14 @@ export default function KundaliManagementPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {kundalis.map((kundali) => (
-            <div
+            <KundaliCard
               key={kundali.id}
-              className="relative rounded-lg border border-border bg-card p-6"
-            >
-              <div className="mb-4">
-                <h3 className="text-xl font-semibold">{kundali.fullName}</h3>
-                <p className="text-sm text-muted-foreground">
-                  Born: {new Date(kundali.dateOfBirth).toLocaleDateString()}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Place: {kundali.placeOfBirth}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => startEdit(kundali)}
-                >
-                  <Edit2 className="mr-2 h-4 w-4" />
-                  Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setShowDeleteConfirm(kundali.id)}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </Button>
-              </div>
-            </div>
+              kundali={kundali}
+              onEdit={startEdit}
+              onDelete={(id) => setShowDeleteConfirm(id)}
+            />
           ))}
         </div>
       )}
@@ -222,10 +191,10 @@ export default function KundaliManagementPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="font-libre-bold">
               {editingKundali ? "Edit Kundali" : "Create New Kundali"}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="font-libre-regular">
               {editingKundali 
                 ? "Update the details of your kundali chart"
                 : "Enter the details to create a new kundali chart"}
@@ -233,33 +202,33 @@ export default function KundaliManagementPage() {
           </DialogHeader>
           <form onSubmit={editingKundali ? handleUpdateKundali : handleCreateKundali} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName" className="font-libre-regular">Full Name</Label>
               <Input
                 id="fullName"
                 value={newKundali.fullName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setNewKundali(prev => ({ ...prev, fullName: e.target.value }))}
+                onChange={(e) => setNewKundali(prev => ({ ...prev, fullName: e.target.value }))}
+                className="font-libre-regular"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dateOfBirth">Date of Birth</Label>
+              <Label htmlFor="dateOfBirth" className="font-libre-regular">Date of Birth</Label>
               <Input
                 id="dateOfBirth"
                 type="date"
                 value={newKundali.dateOfBirth}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setNewKundali(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                onChange={(e) => setNewKundali(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                className="font-libre-regular"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="placeOfBirth">Place of Birth</Label>
+              <Label htmlFor="placeOfBirth" className="font-libre-regular">Place of Birth</Label>
               <Input
                 id="placeOfBirth"
                 value={newKundali.placeOfBirth}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setNewKundali(prev => ({ ...prev, placeOfBirth: e.target.value }))}
+                onChange={(e) => setNewKundali(prev => ({ ...prev, placeOfBirth: e.target.value }))}
+                className="font-libre-regular"
                 required
               />
             </div>
@@ -270,16 +239,21 @@ export default function KundaliManagementPage() {
                 onClick={() => {
                   setShowNewKundaliModal(false);
                   setEditingKundali(null);
-                  setNewKundali({ fullName: "", dateOfBirth: "", placeOfBirth: "" });
                 }}
+                className="font-libre-regular"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <Loading size="sm" className="mr-2" />
-                ) : null}
-                {editingKundali ? "Update" : "Create"}
+              <Button 
+                type="submit"
+                disabled={isSubmitting}
+                className="font-libre-regular"
+              >
+                {isSubmitting
+                  ? "Saving..."
+                  : editingKundali
+                  ? "Save Changes"
+                  : "Create Kundali"}
               </Button>
             </DialogFooter>
           </form>
@@ -293,8 +267,8 @@ export default function KundaliManagementPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Kundali</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="font-libre-bold">Delete Kundali</DialogTitle>
+            <DialogDescription className="font-libre-regular">
               Are you sure you want to delete this kundali? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
@@ -303,6 +277,7 @@ export default function KundaliManagementPage() {
               type="button"
               variant="outline"
               onClick={() => setShowDeleteConfirm(null)}
+              className="font-libre-regular"
             >
               Cancel
             </Button>
@@ -311,11 +286,9 @@ export default function KundaliManagementPage() {
               variant="destructive"
               disabled={isSubmitting}
               onClick={() => showDeleteConfirm && handleDeleteKundali(showDeleteConfirm)}
+              className="font-libre-regular"
             >
-              {isSubmitting ? (
-                <Loading size="sm" className="mr-2" />
-              ) : null}
-              Delete
+              {isSubmitting ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
