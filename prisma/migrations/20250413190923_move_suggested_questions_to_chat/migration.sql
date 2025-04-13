@@ -7,6 +7,9 @@
 -- AlterTable
 ALTER TABLE "Chat" ADD COLUMN "suggestedQuestions" TEXT;
 
+-- AlterTable
+ALTER TABLE "Message" DROP COLUMN "suggestedQuestions";
+
 -- RedefineTables
 PRAGMA defer_foreign_keys=ON;
 PRAGMA foreign_keys=OFF;

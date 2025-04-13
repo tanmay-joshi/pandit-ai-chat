@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "../../../../lib/prisma";
 import { authOptions } from "../../auth/[...nextauth]/route";
+import { logger } from "../../../../lib/logger";
 
 // Get a specific chat with its messages
 export async function GET(
@@ -9,6 +10,14 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const id = params.id;
+
+    logger.debug(`GET chat ${id}`);
+
+    if (!id) {
+      return NextResponse.json({ error: "Chat ID is required" }, { status: 400 });
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
@@ -23,19 +32,24 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const { id } = params;
-
+    // Get the chat data including suggestedQuestions
     const chat = await prisma.chat.findUnique({
-      where: { id: id },
+      where: { id },
       include: {
         messages: {
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: 'asc' }
         },
         agent: true,
-      },
+        kundalis: {
+          include: {
+            kundali: true
+          }
+        }
+      }
     });
 
     if (!chat) {
+      logger.error(`Chat ${id} not found`);
       return NextResponse.json({ error: "Chat not found" }, { status: 404 });
     }
 
@@ -43,22 +57,31 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    // Fetch associated kundalis for this chat
-    const chatKundalis = await prisma.$queryRaw`
-      SELECT k.* FROM "Kundali" k
-      JOIN "ChatKundali" ck ON k.id = ck.kundaliId
-      WHERE ck.chatId = ${id}
+    // Get the suggestedQuestions field directly
+    const chatWithQuestions = await prisma.$queryRaw`
+      SELECT "suggestedQuestions" FROM "Chat" WHERE id = ${id}
     `;
-    
-    // Add kundalis to the chat response
-    const chatWithKundalis = {
+
+    // Format kundalis data to match expected type
+    const kundalis = chat.kundalis.map(k => k.kundali);
+
+    // Create response with all data
+    const response = {
       ...chat,
-      kundalis: chatKundalis || []
+      kundalis,
+      suggestedQuestions: Array.isArray(chatWithQuestions) && chatWithQuestions.length > 0 
+        ? chatWithQuestions[0].suggestedQuestions 
+        : null
     };
 
-    return NextResponse.json(chatWithKundalis);
+    logger.debug('Chat data fetched successfully', { 
+      chatId: id, 
+      hasQuestions: !!response.suggestedQuestions 
+    });
+
+    return NextResponse.json(response);
   } catch (error) {
-    console.error("Error fetching chat:", error);
+    logger.error("Error fetching chat:", error);
     return NextResponse.json(
       { error: "Failed to fetch chat" },
       { status: 500 }

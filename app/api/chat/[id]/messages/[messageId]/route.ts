@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "../../../../../../lib/prisma";
 import { authOptions } from "../../../../auth/[...nextauth]/route";
+import { logger } from "../../../../../../lib/logger";
 
 // Update a message (used to update the content and suggested questions after streaming)
 export async function PATCH(
@@ -93,6 +94,8 @@ export async function GET(
   try {
     const { id: chatId, messageId } = params;
     
+    logger.debug(`GET message ${messageId} from chat ${chatId}`);
+    
     if (!chatId || !messageId) {
       return NextResponse.json({ error: "Chat ID and Message ID are required" }, { status: 400 });
     }
@@ -119,10 +122,12 @@ export async function GET(
     `;
 
     if (!chat || !Array.isArray(chat) || chat.length === 0) {
+      logger.error(`Chat ${chatId} not found`);
       return NextResponse.json({ error: "Chat not found" }, { status: 404 });
     }
 
     const chatData = chat[0];
+    logger.debug(`Chat data for ${chatId}:`, chatData);
 
     if (chatData.userId !== user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -137,16 +142,26 @@ export async function GET(
     });
 
     if (!message) {
+      logger.error(`Message ${messageId} not found`);
       return NextResponse.json({ error: "Message not found" }, { status: 404 });
     }
 
-    // Return both message and chat data with suggested questions
-    return NextResponse.json({
+    logger.debug(`Message ${messageId} found:`, message);
+    logger.debug(`Chat ${chatId} suggested questions:`, chatData.suggestedQuestions);
+
+    // Create response and set headers
+    const response = NextResponse.json({
       message,
       chatSuggestedQuestions: chatData.suggestedQuestions
-    });
+    }, { status: 200 });
+    
+    // Set headers to prevent caching
+    response.headers.set('Cache-Control', 'no-store, max-age=0');
+    response.headers.set('Content-Type', 'application/json');
+    
+    return response;
   } catch (error) {
-    console.error("Error fetching message:", error);
+    logger.error("Error fetching message:", error);
     return NextResponse.json(
       { error: "Failed to fetch message" },
       { status: 500 }

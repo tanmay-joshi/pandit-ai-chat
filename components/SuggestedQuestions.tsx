@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { logger } from "../lib/logger";
 
 interface SuggestedQuestionsProps {
   questions: string[];
@@ -11,13 +12,23 @@ export default function SuggestedQuestions({
   onQuestionClick,
   isLoading = false
 }: SuggestedQuestionsProps) {
-  // Add debug logging
-  console.log("Rendering SuggestedQuestions with:", { questions, isLoading });
+  // Log on component mount and when questions change
+  useEffect(() => {
+    logger.debug("SuggestedQuestions mounted/updated with questions:", questions);
+    
+    // Log questions as a stringified array to see exact content
+    if (questions && questions.length > 0) {
+      logger.debug("Questions stringified:", JSON.stringify(questions));
+    }
+  }, [questions]);
 
+  // Check if we have valid questions to display
   if (!questions || questions.length === 0) {
-    console.log("No questions to display");
+    logger.debug("No questions to display, returning null");
     return null;
   }
+
+  logger.info("Rendering SuggestedQuestions with", questions.length, "questions");
 
   return (
     <div className="p-3 mb-2 neu-inset rounded-xl">
@@ -31,7 +42,7 @@ export default function SuggestedQuestions({
           <button
             key={index}
             onClick={() => {
-              console.log("Question clicked:", question);
+              logger.info("Question clicked:", question);
               onQuestionClick(question);
             }}
             className="text-xs neu-button neu-button-hover px-3 py-1.5 rounded-full transition-colors"

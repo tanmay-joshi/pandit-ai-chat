@@ -12,6 +12,7 @@ import { Chat, Message } from "@/types/chat";
 import { SelectionStep } from "@/types/enums";
 import { generateTempMessageId } from "@/lib/utils";
 import SuggestedQuestions from "@/components/SuggestedQuestions";
+import { logger } from "@/lib/logger";
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
@@ -29,7 +30,49 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const [streamedContent, setStreamedContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch chat data when component mounts
+  // Function to fetch the latest chat data including suggested questions
+  const fetchLatestChatData = useCallback(async () => {
+    try {
+      logger.info("Fetching latest chat data...");
+      const res = await fetch(`/api/chat/${params.id}`);
+      
+      if (!res.ok) {
+        logger.error("Error fetching chat data:", await res.text());
+        return;
+      }
+      
+      const chatData = await res.json();
+      logger.debug("Received chat data:", chatData);
+      
+      setChat(chatData);
+      
+      // Update suggested questions if available
+      if (chatData.suggestedQuestions) {
+        try {
+          const parsedQuestions = JSON.parse(chatData.suggestedQuestions);
+          logger.info("Setting suggested questions:", parsedQuestions);
+          setSuggestedQuestions(parsedQuestions);
+        } catch (e) {
+          logger.error("Error parsing suggested questions:", e, chatData.suggestedQuestions);
+          setSuggestedQuestions([]);
+        }
+      } else {
+        logger.debug("No suggested questions in chat data");
+        setSuggestedQuestions([]);
+      }
+    } catch (error) {
+      logger.error("Error in fetchLatestChatData:", error);
+    }
+  }, [params.id]);
+
+  // Use this to fetch data on first load and periodically
+  useEffect(() => {
+    if (chat) {
+      fetchLatestChatData();
+    }
+  }, [fetchLatestChatData, chat?.id]);
+
+  // Initial fetch when component mounts
   useEffect(() => {
     async function fetchChat() {
       if (status === "unauthenticated") {
@@ -46,6 +89,17 @@ export default function ChatPage({ params }: { params: { id: string } }) {
           const data = await response.json();
           setChat(data);
           setStep(SelectionStep.Chatting);
+          
+          // Set suggested questions if available
+          if (data.suggestedQuestions) {
+            try {
+              const parsedQuestions = JSON.parse(data.suggestedQuestions);
+              logger.info("Setting initial suggested questions:", parsedQuestions);
+              setSuggestedQuestions(parsedQuestions);
+            } catch (e) {
+              logger.error("Error parsing initial suggested questions:", e);
+            }
+          }
         } catch (err) {
           setError(err instanceof Error ? err.message : "Failed to load chat");
         } finally {
@@ -79,9 +133,9 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         setStreamedContent(currentContent);
       }
     } catch (error) {
-      console.error("Error reading stream:", error);
+      logger.error("Error reading stream:", error);
     } finally {
-      console.log("Stream ended, fetching latest message data...");
+      logger.info("Stream ended, fetching latest message data...");
       
       // Fetch the updated message to get the suggested questions
       if (messageId) {
@@ -89,6 +143,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
           const res = await fetch(`/api/chat/${params.id}/messages/${messageId}`);
           if (res.ok) {
             const data = await res.json();
+            logger.debug("Received data from API:", data);
+            
             const updatedMessage = data.message;
             const chatSuggestedQuestions = data.chatSuggestedQuestions;
             
@@ -96,34 +152,41 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             setChat(prev => {
               if (!prev) return prev;
               
-              return {
+              const updatedChat = {
                 ...prev,
                 messages: prev.messages.map(msg => 
                   msg.id === messageId ? updatedMessage : msg
                 ),
                 suggestedQuestions: chatSuggestedQuestions
               };
+              
+              logger.debug("Updated chat:", updatedChat);
+              return updatedChat;
             });
             
             // Update suggested questions state for the UI
             if (chatSuggestedQuestions) {
               try {
                 const parsedQuestions = JSON.parse(chatSuggestedQuestions);
+                logger.info("Parsed suggested questions:", parsedQuestions);
                 setSuggestedQuestions(parsedQuestions);
-                console.log("Updated suggested questions:", parsedQuestions);
               } catch (e) {
-                console.error("Error parsing suggested questions:", e);
+                logger.error("Error parsing suggested questions:", e, chatSuggestedQuestions);
                 setSuggestedQuestions([]);
               }
             } else {
+              logger.info("No suggested questions in response");
               setSuggestedQuestions([]);
             }
-            
-            console.log("Updated message data:", updatedMessage);
+          } else {
+            logger.error("Error response from API:", await res.text());
           }
         } catch (err) {
-          console.error("Error fetching updated message:", err);
+          logger.error("Error fetching updated message:", err);
         }
+        
+        // Fetch the full chat again to ensure we have the latest data
+        await fetchLatestChatData();
       }
       
       // Reset streaming state after a short delay to ensure smooth transition
@@ -131,7 +194,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         setIsStreaming(false);
       }, 100);
     }
-  }, [params.id]);
+  }, [params.id, fetchLatestChatData]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -217,11 +280,14 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   };
 
   // Handle clicking on a suggested question
-  const handleSuggestedQuestionClick = (question: string) => {
+  const handleSuggestedQuestionClick = useCallback((question: string) => {
+    console.log("Question clicked:", question);
     setInput(question);
-    // Auto-submit if desired
-    sendMessage({ preventDefault: () => {} } as React.FormEvent);
-  };
+    // Auto-submit after a brief delay to allow the UI to update
+    setTimeout(() => {
+      sendMessage({ preventDefault: () => {} } as React.FormEvent);
+    }, 100);
+  }, [sendMessage]);
 
   if (status === "loading" || loading) {
     return (
@@ -266,8 +332,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         />
         
         {/* Show suggested questions only when not streaming */}
-        {!isStreaming && suggestedQuestions.length > 0 && (
-          <div className="mx-auto max-w-4xl mb-4">
+        {!isStreaming && suggestedQuestions && suggestedQuestions.length > 0 && (
+          <div className="mx-auto max-w-4xl mb-4 px-4">
             <SuggestedQuestions
               questions={suggestedQuestions}
               onQuestionClick={handleSuggestedQuestionClick}
