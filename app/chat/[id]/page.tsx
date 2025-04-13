@@ -56,12 +56,6 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     fetchChat();
   }, [params.id, status, router]);
 
-  // Auto scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (messagesEndRef.current && (chat?.messages.length || isStreaming)) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [chat?.messages, streamedContent, isStreaming]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,7 +191,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         kundalis={chat.kundalis}
       />
       
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-blue">
         <ChatMessages
           messages={chat.messages}
           agent={chat.agent ?? null}

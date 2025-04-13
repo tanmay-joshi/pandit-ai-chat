@@ -3,6 +3,7 @@ import { Agent } from "@/types/agent";
 import { SelectionStep } from "@/types/enums";
 import { MessageBubble } from "./MessageBubble";
 import { Loading } from "@/components/ui/loading";
+import { useEffect, useRef } from "react";
 
 export interface ChatMessagesProps {
   messages: Message[];
@@ -27,8 +28,16 @@ export function ChatMessages({
   step,
   onScrollBottom
 }: ChatMessagesProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, streamedContent]);
+  
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="mx-auto max-w-4xl">
       {messages.map((message, index) => (
         <MessageBubble
           key={message.id}
@@ -51,6 +60,8 @@ export function ChatMessages({
           {error}
         </div>
       )}
+
+      <div ref={messagesEndRef} />
     </div>
   );
 } 
