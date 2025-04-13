@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { logger } from "../lib/logger";
 
 interface SuggestedQuestionsProps {
   questions: string[];
@@ -11,14 +12,28 @@ export default function SuggestedQuestions({
   onQuestionClick,
   isLoading = false
 }: SuggestedQuestionsProps) {
-  if (questions.length === 0) {
+  // Log on component mount and when questions change
+  useEffect(() => {
+    logger.debug("SuggestedQuestions mounted/updated with questions:", questions);
+    
+    // Log questions as a stringified array to see exact content
+    if (questions && questions.length > 0) {
+      logger.debug("Questions stringified:", JSON.stringify(questions));
+    }
+  }, [questions]);
+
+  // Check if we have valid questions to display
+  if (!questions || questions.length === 0) {
+    logger.debug("No questions to display, returning null");
     return null;
   }
 
+  logger.info("Rendering SuggestedQuestions with", questions.length, "questions");
+
   return (
-    <div className="p-3 mb-2 border-t border-gray-200 neu-inset">
+    <div className="p-3 mb-2 neu-inset rounded-xl">
       <div className="flex items-center mb-2">
-        <p className="text-xs neu-text font-medium">
+        <p className="text-xs text-neutral-600 font-medium">
           {isLoading ? "Loading suggestions..." : "Suggested questions:"}
         </p>
       </div>
@@ -26,7 +41,10 @@ export default function SuggestedQuestions({
         {questions.map((question, index) => (
           <button
             key={index}
-            onClick={() => onQuestionClick(question)}
+            onClick={() => {
+              logger.info("Question clicked:", question);
+              onQuestionClick(question);
+            }}
             className="text-xs neu-button neu-button-hover px-3 py-1.5 rounded-full transition-colors"
             disabled={isLoading}
           >

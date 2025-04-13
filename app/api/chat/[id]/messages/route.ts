@@ -257,23 +257,89 @@ export async function POST(
           // Create a TransformStream to duplicate the stream
           const transformStream = new TransformStream({
             transform(chunk, controller) {
-              // Pass the chunk through
-              controller.enqueue(chunk);
-              
-              // Collect the chunk for our database update
+              // Decode the chunk
               const decoded = textDecoder.decode(chunk, { stream: true });
+              
+              // Add to our full response for later processing
               fullResponse += decoded;
+              
+              // Check if this chunk contains the start of suggested questions
+              if (decoded.includes("SUGGESTED QUESTIONS:")) {
+                // Split at "SUGGESTED QUESTIONS:" and only stream the content before it
+                const parts = decoded.split("SUGGESTED QUESTIONS:");
+                if (parts[0]) {
+                  controller.enqueue(new TextEncoder().encode(parts[0]));
+                }
+                // Don't stream the questions part
+                return;
+              }
+              
+              // If we haven't hit the questions section yet, stream the chunk
+              if (!fullResponse.includes("SUGGESTED QUESTIONS:")) {
+                controller.enqueue(chunk);
+              }
             },
             flush(controller) {
-              // When the stream is done, update the database
+              // When the stream is done, update the database - but don't try to send more data
+              // through the already closed stream
+              
               (async () => {
                 try {
-                  console.log("AI stream complete, updating database with response of length:", fullResponse.length);
-                  await prisma.message.update({
-                    where: { id: aiMessage.id },
-                    data: { content: fullResponse }
-                  });
-                  console.log("Database updated with full response");
+                  console.log("AI stream complete, processing response...");
+                  
+                  // Split the response at "SUGGESTED QUESTIONS:"
+                  const parts = fullResponse.split("SUGGESTED QUESTIONS:");
+                  let cleanedContent = parts[0]; // Main content without questions
+                  const questionsSection = parts[1];
+                  
+                  // Initialize suggestedQuestions array
+                  let suggestedQuestions: string[] = [];
+                  
+                  if (questionsSection) {
+                    console.log("Found questions section:", questionsSection);
+                    
+                    // Extract questions using line-by-line approach
+                    const lines = questionsSection.split('\n');
+                    suggestedQuestions = lines
+                      .filter(line => line.match(/^\d+\./)) // Match lines starting with numbers
+                      .map(line => {
+                        // Extract everything after the number and dot
+                        const question = line.replace(/^\d+\.\s*/, '').trim();
+                        console.log("Extracted question:", question);
+                        return question;
+                      })
+                      .filter(q => q && q.length > 0); // Remove empty questions
+                    
+                    console.log("Final extracted questions:", suggestedQuestions);
+                  } else {
+                    console.log("No questions section found in response");
+                    cleanedContent = fullResponse; // Keep full content if no questions found
+                  }
+
+                  // Trim any trailing whitespace or newlines
+                  cleanedContent = cleanedContent.trim();
+
+                  // Prepare the questions JSON string
+                  const questionsJson = suggestedQuestions.length > 0 
+                    ? JSON.stringify(suggestedQuestions)
+                    : null;
+                  
+                  console.log("Saving to database with questions JSON:", questionsJson);
+
+                  // Update both the message and chat
+                  const [updatedMessage, updatedChat] = await Promise.all([
+                    // Update message with clean content only
+                    prisma.message.update({
+                      where: { id: aiMessage.id },
+                      data: { content: cleanedContent }
+                    }),
+                    // Update chat with suggested questions
+                    prisma.$executeRaw`UPDATE "Chat" SET "suggestedQuestions" = ${questionsJson} WHERE id = ${chatId}`
+                  ]);
+                  
+                  // Don't try to send anything through the stream here - it's already closed
+                  console.log("Database updated. Message content and chat questions saved.");
+                  
                 } catch (error) {
                   console.error("Error updating database:", error);
                 }
