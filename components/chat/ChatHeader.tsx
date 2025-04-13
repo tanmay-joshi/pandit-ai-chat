@@ -13,7 +13,7 @@ export function ChatHeader({ title, agent, kundalis }: ChatHeaderProps) {
   return (
     <header className="px-4 py-3">
       <div className="mx-auto max-w-4xl">
-        <div className="neu-card-secondary neu-card-secondary-hover py-2">
+        <div className="neu-card-secondary py-2">
           <div className="flex items-center gap-4">
             {/* Back Button */}
             <Link

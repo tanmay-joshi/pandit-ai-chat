@@ -1,23 +1,22 @@
-export type Message = {
+import { Agent as BaseAgent } from "./agent";
+
+export interface Message {
   id: string;
   content: string;
   role: "user" | "assistant";
   createdAt: string;
-  hasOptions?: boolean;
-  suggestedQuestions?: string[];
-};
+  chatId: string;
+  userId: string;
+  cost: number;
+  paid: boolean;
+}
 
-export type Agent = {
-  id: string;
-  name: string;
-  description: string;
-  avatar: string | null;
+export interface Agent extends BaseAgent {
   systemPrompt: string;
   messageCost: number;
   tags?: string | null;
   kundaliLimit: number;
-  expertise?: string[];
-};
+}
 
 export type Kundali = {
   id: string;
@@ -26,11 +25,13 @@ export type Kundali = {
   placeOfBirth: string;
 };
 
-export type Chat = {
+export interface Chat {
   id: string;
   title: string;
-  messages: Message[];
-  agent?: Agent | null;
-  kundalis?: Kundali[] | null;
   createdAt: string;
-}; 
+  userId: string;
+  agent?: Agent;
+  messages: Message[];
+  kundalis?: Kundali[];
+  suggestedQuestions?: string;
+} 
