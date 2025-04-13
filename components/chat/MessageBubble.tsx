@@ -27,12 +27,13 @@ export function MessageBubble({
   return (
     <div
       className={cn(
-        "flex gap-3 items-start",
+        "flex items-start py-3",
         isAssistant ? "flex-row" : "flex-row-reverse"
       )}
     >
-      {isAssistant ? (
+      {/* {isAssistant ? (
         <Avatar
+          className="neu-avatar"
           src={agent?.avatarUrl || ""}
           alt={agent?.name || "AI"}
           fallback={agent?.name?.[0] || "AI"}
@@ -43,17 +44,22 @@ export function MessageBubble({
           alt="You"
           fallback="U"
         />
-      )}
+      )} */}
 
       <div
         className={cn(
-          "rounded-lg p-4 max-w-[80%]",
+          "rounded-xl p-3 max-w-[80%]",
           isAssistant
-            ? "bg-secondary text-secondary-foreground"
-            : "bg-primary text-primary-foreground"
+            ? "neu-card "
+            : "neu-inset-2"
         )}
       >
-        <div className="whitespace-pre-wrap break-words">{displayContent}</div>
+        <div className={cn(
+          "whitespace-pre-wrap break-words",
+          isAssistant
+            ? "text-neutral-800"
+            : "text-neutral-800"
+        )}>{displayContent}</div>
         {isStreaming && isLastMessage && (
           <div className="mt-2">
             <Loading size="sm" />
@@ -61,10 +67,10 @@ export function MessageBubble({
         )}
         <div
           className={cn(
-            "text-xs mt-2 opacity-70",
+            "text-xs mt-2",
             isAssistant
-              ? "text-secondary-foreground"
-              : "text-primary-foreground"
+              ? "text-neutral-600"
+              : "text-neutral-600"
           )}
         >
           {timestamp}
