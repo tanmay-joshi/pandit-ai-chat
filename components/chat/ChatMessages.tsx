@@ -3,7 +3,7 @@ import { Agent } from "@/types/agent";
 import { SelectionStep } from "@/types/enums";
 import { MessageBubble } from "./MessageBubble";
 import { Loading } from "@/components/ui/loading";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export interface ChatMessagesProps {
   messages: Message[];
@@ -29,6 +29,14 @@ export function ChatMessages({
   onScrollBottom
 }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [lastStreamContent, setLastStreamContent] = useState("");
+
+  // Store the last streamed content when streaming ends
+  useEffect(() => {
+    if (isStreaming) {
+      setLastStreamContent(streamedContent);
+    }
+  }, [isStreaming, streamedContent]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -38,16 +46,29 @@ export function ChatMessages({
   
   return (
     <div className="mx-auto max-w-4xl">
-      {messages.map((message, index) => (
-        <MessageBubble
-          key={message.id}
-          message={message}
-          agent={agent}
-          isLastMessage={index === messages.length - 1}
-          isStreaming={isStreaming && index === messages.length - 1}
-          streamedContent={isStreaming && index === messages.length - 1 ? streamedContent : undefined}
-        />
-      ))}
+      {messages.map((message, index) => {
+        const isLastMessage = index === messages.length - 1;
+        
+        // Determine content to display
+        const displayContent = isLastMessage && isStreaming 
+          ? streamedContent 
+          : message.content || (isLastMessage ? lastStreamContent : "");
+          
+        return (
+          <div key={message.id} className="mb-6">
+            <MessageBubble
+              message={{
+                ...message,
+                content: displayContent // Use our determined content
+              }}
+              agent={agent}
+              isLastMessage={isLastMessage}
+              isStreaming={isStreaming && isLastMessage}
+              streamedContent={isStreaming && isLastMessage ? streamedContent : undefined}
+            />
+          </div>
+        );
+      })}
       
       {sending && !isStreaming && (
         <div className="flex justify-center py-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -11,6 +11,7 @@ import { Loading } from "@/components/ui/loading";
 import { Chat, Message } from "@/types/chat";
 import { SelectionStep } from "@/types/enums";
 import { generateTempMessageId } from "@/lib/utils";
+import SuggestedQuestions from "@/components/SuggestedQuestions";
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
@@ -56,6 +57,81 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     fetchChat();
   }, [params.id, status, router]);
 
+  const handleStream = useCallback(async (response: Response) => {
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+    const messageId = response.headers.get('X-Message-Id');
+
+    if (!reader) return;
+
+    try {
+      // Store content for the current message
+      let currentContent = "";
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        
+        // Handle normal streaming content
+        currentContent += chunk;
+        setStreamedContent(currentContent);
+      }
+    } catch (error) {
+      console.error("Error reading stream:", error);
+    } finally {
+      console.log("Stream ended, fetching latest message data...");
+      
+      // Fetch the updated message to get the suggested questions
+      if (messageId) {
+        try {
+          const res = await fetch(`/api/chat/${params.id}/messages/${messageId}`);
+          if (res.ok) {
+            const data = await res.json();
+            const updatedMessage = data.message;
+            const chatSuggestedQuestions = data.chatSuggestedQuestions;
+            
+            // Update the chat with the latest message data
+            setChat(prev => {
+              if (!prev) return prev;
+              
+              return {
+                ...prev,
+                messages: prev.messages.map(msg => 
+                  msg.id === messageId ? updatedMessage : msg
+                ),
+                suggestedQuestions: chatSuggestedQuestions
+              };
+            });
+            
+            // Update suggested questions state for the UI
+            if (chatSuggestedQuestions) {
+              try {
+                const parsedQuestions = JSON.parse(chatSuggestedQuestions);
+                setSuggestedQuestions(parsedQuestions);
+                console.log("Updated suggested questions:", parsedQuestions);
+              } catch (e) {
+                console.error("Error parsing suggested questions:", e);
+                setSuggestedQuestions([]);
+              }
+            } else {
+              setSuggestedQuestions([]);
+            }
+            
+            console.log("Updated message data:", updatedMessage);
+          }
+        } catch (err) {
+          console.error("Error fetching updated message:", err);
+        }
+      }
+      
+      // Reset streaming state after a short delay to ensure smooth transition
+      setTimeout(() => {
+        setIsStreaming(false);
+      }, 100);
+    }
+  }, [params.id]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,20 +148,27 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         id: generateTempMessageId(),
         content: input.trim(),
         role: "user",
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        chatId: params.id,
+        userId: session?.user?.id || "",
+        cost: 0,
+        paid: false
       };
 
       setChat(prev => prev ? {
         ...prev,
         messages: [...prev.messages, userMessage]
       } : prev);
-
       // Create placeholder for AI response
       const placeholderAIMessage: Message = {
         id: generateTempMessageId(),
         content: "",
         role: "assistant",
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        chatId: params.id,
+        userId: session?.user?.id || "",
+        cost: 0,
+        paid: false
       };
 
       setChat(prev => prev ? {
@@ -116,35 +199,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       const messageId = res.headers.get('X-Message-Id');
 
       // Handle streaming response
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder();
-      let accumulatedContent = "";
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value);
-          accumulatedContent += chunk;
-          setStreamedContent(accumulatedContent);
-
-          // Update the AI message in chat state
-          setChat(prev => {
-            if (!prev) return prev;
-            const updatedMessages = [...prev.messages];
-            const lastMessageIndex = updatedMessages.length - 1;
-            if (lastMessageIndex >= 0) {
-              updatedMessages[lastMessageIndex] = {
-                ...updatedMessages[lastMessageIndex],
-                content: accumulatedContent,
-                id: messageId || updatedMessages[lastMessageIndex].id
-              };
-            }
-            return { ...prev, messages: updatedMessages };
-          });
-        }
-      }
+      await handleStream(res);
 
       setInput("");
     } catch (err) {
@@ -159,6 +214,13 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       setIsStreaming(false);
       setStreamedContent("");
     }
+  };
+
+  // Handle clicking on a suggested question
+  const handleSuggestedQuestionClick = (question: string) => {
+    setInput(question);
+    // Auto-submit if desired
+    sendMessage({ preventDefault: () => {} } as React.FormEvent);
   };
 
   if (status === "loading" || loading) {
@@ -190,7 +252,6 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         agent={chat.agent}
         kundalis={chat.kundalis}
       />
-      
       <div className="flex-1 overflow-y-auto bg-blue">
         <ChatMessages
           messages={chat.messages}
@@ -203,6 +264,17 @@ export default function ChatPage({ params }: { params: { id: string } }) {
           step={step}
           onScrollBottom={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
         />
+        
+        {/* Show suggested questions only when not streaming */}
+        {!isStreaming && suggestedQuestions.length > 0 && (
+          <div className="mx-auto max-w-4xl mb-4">
+            <SuggestedQuestions
+              questions={suggestedQuestions}
+              onQuestionClick={handleSuggestedQuestionClick}
+              isLoading={false}
+            />
+          </div>
+        )}
       </div>
       
       <ChatInput
@@ -212,10 +284,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         sending={sending}
         step={step}
         agent={chat.agent}
-        suggestedQuestions={suggestedQuestions}
-        onSuggestedQuestionClick={(question) => {
-          setInput(question);
-        }}
+        suggestedQuestions={[]} // We're handling suggested questions above now
+        onSuggestedQuestionClick={() => {}} // No-op since we handle it above
       />
 
       <InsufficientCreditsDialog
