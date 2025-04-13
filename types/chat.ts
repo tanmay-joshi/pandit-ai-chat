@@ -1,3 +1,5 @@
+import { Agent as BaseAgent } from "./agent";
+
 export type Message = {
   id: string;
   content: string;
@@ -7,17 +9,12 @@ export type Message = {
   suggestedQuestions?: string[];
 };
 
-export type Agent = {
-  id: string;
-  name: string;
-  description: string;
-  avatar: string | null;
+export interface Agent extends BaseAgent {
   systemPrompt: string;
   messageCost: number;
   tags?: string | null;
   kundaliLimit: number;
-  expertise?: string[];
-};
+}
 
 export type Kundali = {
   id: string;

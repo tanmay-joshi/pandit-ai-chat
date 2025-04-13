@@ -8,15 +8,9 @@ import { ChatMessages } from "@/components/chat/ChatMessages";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { InsufficientCreditsDialog } from "@/components/dialogs/InsufficientCreditsDialog";
 import { Loading } from "@/components/ui/loading";
-import { Chat } from "@/types/chat";
-
-enum SelectionStep {
-  Initial = 'initial',
-  SelectAgent = 'agent',
-  SelectKundali = 'kundali',
-  Ready = 'ready',
-  Chatting = 'chatting'
-}
+import { Chat, Message } from "@/types/chat";
+import { SelectionStep } from "@/types/enums";
+import { generateTempMessageId } from "@/lib/utils";
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
@@ -30,6 +24,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [showCreditsDialog, setShowCreditsDialog] = useState(false);
   const [creditsInfo, setCreditsInfo] = useState({ required: 0, available: 0 });
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamedContent, setStreamedContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch chat data when component mounts
@@ -60,14 +56,49 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     fetchChat();
   }, [params.id, status, router]);
 
+  // Auto scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current && (chat?.messages.length || isStreaming)) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chat?.messages, streamedContent, isStreaming]);
+
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !chat) return;
+    if (!input.trim() || !chat || sending) return;
 
     setSending(true);
     setError(null);
+    setIsStreaming(true);
+    setStreamedContent("");
     
     try {
+      // Add user message immediately
+      const userMessage: Message = {
+        id: generateTempMessageId(),
+        content: input.trim(),
+        role: "user",
+        createdAt: new Date().toISOString()
+      };
+
+      setChat(prev => prev ? {
+        ...prev,
+        messages: [...prev.messages, userMessage]
+      } : prev);
+
+      // Create placeholder for AI response
+      const placeholderAIMessage: Message = {
+        id: generateTempMessageId(),
+        content: "",
+        role: "assistant",
+        createdAt: new Date().toISOString()
+      };
+
+      setChat(prev => prev ? {
+        ...prev,
+        messages: [...prev.messages, placeholderAIMessage]
+      } : prev);
+
       const res = await fetch(`/api/chat/${params.id}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,7 +107,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
       if (!res.ok) {
         const data = await res.json();
-        if (res.status === 402) { // Payment Required
+        if (res.status === 402) {
           setCreditsInfo({
             required: data.required,
             available: data.balance
@@ -87,17 +118,52 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         throw new Error(data.error || "Failed to send message");
       }
 
-      const newMessage = await res.json();
-      
-      setChat(prev => prev ? {
-        ...prev,
-        messages: [...prev.messages, newMessage]
-      } : prev);
+      // Get the message ID from the response headers
+      const messageId = res.headers.get('X-Message-Id');
+
+      // Handle streaming response
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          accumulatedContent += chunk;
+          setStreamedContent(accumulatedContent);
+
+          // Update the AI message in chat state
+          setChat(prev => {
+            if (!prev) return prev;
+            const updatedMessages = [...prev.messages];
+            const lastMessageIndex = updatedMessages.length - 1;
+            if (lastMessageIndex >= 0) {
+              updatedMessages[lastMessageIndex] = {
+                ...updatedMessages[lastMessageIndex],
+                content: accumulatedContent,
+                id: messageId || updatedMessages[lastMessageIndex].id
+              };
+            }
+            return { ...prev, messages: updatedMessages };
+          });
+        }
+      }
+
       setInput("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message");
+      // Remove the temporary AI message on error
+      setChat(prev => prev ? {
+        ...prev,
+        messages: prev.messages.slice(0, -1)
+      } : prev);
     } finally {
       setSending(false);
+      setIsStreaming(false);
+      setStreamedContent("");
     }
   };
 
@@ -131,15 +197,19 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         kundalis={chat.kundalis}
       />
       
-      <ChatMessages
-        messages={chat.messages}
-        agent={chat.agent}
-        kundalis={chat.kundalis}
-        error={error}
-        sending={sending}
-        step={step}
-        onScrollBottom={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
-      />
+      <div className="flex-1 overflow-y-auto">
+        <ChatMessages
+          messages={chat.messages}
+          agent={chat.agent ?? null}
+          kundalis={chat.kundalis ?? null}
+          error={error}
+          sending={sending}
+          isStreaming={isStreaming}
+          streamedContent={streamedContent}
+          step={step}
+          onScrollBottom={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
+        />
+      </div>
       
       <ChatInput
         input={input}
@@ -166,6 +236,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
           {error}
         </div>
       )}
+      
+      <div ref={messagesEndRef} />
     </div>
   );
 }
