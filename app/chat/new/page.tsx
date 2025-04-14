@@ -23,6 +23,10 @@ type Agent = {
   expertise?: string[];
   messageCost: number;
   kundaliLimit: number;
+  expertiseLevel: string;
+  rating: number;
+  totalReviews: number;
+  todayChats: number;
 };
 
 enum SelectionStep {
@@ -156,7 +160,7 @@ export default function NewChatPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container max-w-7xl mx-auto px-4 py-8">
       {step === SelectionStep.SelectAgent ? (
         <>
           <div className="mb-8 text-center">
@@ -166,7 +170,7 @@ export default function NewChatPage() {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
             {agents.map((agent) => (
               <AgentCard
                 key={agent.id}
@@ -214,7 +218,7 @@ export default function NewChatPage() {
             </div>
           ) : (
             <>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
                 {kundalis.map((kundali) => (
                   <KundaliCard
                     key={kundali.id}
