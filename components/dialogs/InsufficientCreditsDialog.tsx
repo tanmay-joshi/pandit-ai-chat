@@ -21,8 +21,8 @@ export function InsufficientCreditsDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-libre-bold text-xl">Insufficient Credits</DialogTitle>
-          <DialogDescription className="font-libre-regular pt-2 space-y-2">
+          <DialogTitle className="font-primary-bold text-xl">Insufficient Credits</DialogTitle>
+          <DialogDescription className="font-primary-regular pt-2 space-y-2">
             <p>
               You need {requiredCredits} credits to send this message, but you only have{" "}
               {availableCredits} credits in your wallet.
@@ -34,14 +34,14 @@ export function InsufficientCreditsDialog({
         </DialogHeader>
         <div className="flex flex-col gap-3 mt-4">
           <Link href="/wallet" className="w-full">
-            <Button className="w-full font-libre-bold" size="lg">
+            <Button className="w-full font-primary-bold" size="lg">
               Add Credits
             </Button>
           </Link>
           <Button
             variant="outline"
             onClick={onClose}
-            className="font-libre-regular"
+            className="font-primary-regular"
             size="lg"
           >
             Cancel

@@ -160,8 +160,8 @@ export default function NewChatPage() {
       {step === SelectionStep.SelectAgent ? (
         <>
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-libre-bold">Choose Your Guide</h1>
-            <p className="mt-2 text-muted-foreground font-libre-regular">
+            <h1 className="text-3xl font-primary-bold">Choose Your Guide</h1>
+            <p className="mt-2 text-muted-foreground font-primary-regular">
               Select an astrologer to begin your consultation
             </p>
           </div>
@@ -190,8 +190,8 @@ export default function NewChatPage() {
             </Button>
             <div className="flex items-center gap-4">
               <div>
-                <h2 className="text-2xl font-libre-bold">{selectedAgent?.name}</h2>
-                <p className="text-muted-foreground font-libre-regular">
+                <h2 className="text-2xl font-primary-bold">{selectedAgent?.name}</h2>
+                <p className="text-muted-foreground font-primary-regular">
                   Select a kundali for consultation
                 </p>
               </div>
@@ -200,13 +200,13 @@ export default function NewChatPage() {
 
           {kundalis.length === 0 ? (
             <div className="rounded-2xl bg-[#F8F7F4] p-8 text-center border-[0.1rem] border-[#212121] shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1),0_-1px_2px_-2px_rgba(0,0,0,0.1)]">
-              <h3 className="text-lg font-libre-bold">No Kundalis Found</h3>
-              <p className="mt-2 text-muted-foreground font-libre-regular">
+              <h3 className="text-lg font-primary-bold">No Kundalis Found</h3>
+              <p className="mt-2 text-muted-foreground font-primary-regular">
                 Create a kundali in your profile to start a consultation
               </p>
               <Button
                 variant="outline"
-                className="mt-4 font-libre-regular"
+                className="mt-4 font-primary-regular"
                 onClick={() => router.push("/profile/kundali")}
               >
                 Create New Kundali
@@ -231,7 +231,7 @@ export default function NewChatPage() {
                   size="lg"
                   disabled={!selectedKundali}
                   onClick={handleCreateChat}
-                  className="font-libre-regular"
+                  className="font-primary-regular"
                 >
                   {isCreatingChat ? (
                     <Loading size="sm" className="mr-2" />
