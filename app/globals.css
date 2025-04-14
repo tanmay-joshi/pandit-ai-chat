@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Kumbh+Sans:wght@100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -24,7 +26,8 @@
     --input: 240 5.9% 90%;
     --ring: 346.8 77.2% 49.8%;
     --radius: 0.5rem;
-    --font-libre-baskerville: 'Libre Baskerville', serif;
+    --font-primary: 'Kumbh Sans', sans-serif;
+    --font-secondary: 'Libre Baskerville', serif;
 
     /* Neumorphic Design System Variables */
     --neu-background: #F0F0F3;
@@ -66,7 +69,7 @@
   }
 
   html {
-    font-family: var(--font-libre-baskerville);
+    font-family: var(--font-primary);
   }
 }
 
@@ -188,11 +191,11 @@
 
   /* Typography */
   .neu-title {
-    @apply font-libre-bold text-[var(--neu-text-primary)];
+    @apply font-primary-bold text-[var(--neu-text-primary)];
   }
 
   .neu-text {
-    @apply font-libre-regular text-muted-foreground;
+    @apply font-primary-regular text-muted-foreground;
   }
 
   /* Size Variants */
@@ -496,24 +499,51 @@
 }
 
 @layer utilities {
-  .font-libre {
-    font-family: var(--font-libre-baskerville);
+  .font-primary {
+    font-family: var(--font-primary);
   }
 
-  .font-libre-regular {
-    font-family: var(--font-libre-baskerville);
+  .font-primary-light {
+    font-family: var(--font-primary);
+    font-weight: 300;
+  }
+
+  .font-primary-regular {
+    font-family: var(--font-primary);
     font-weight: 400;
-    font-style: normal;
   }
 
-  .font-libre-bold {
-    font-family: var(--font-libre-baskerville);
+  .font-primary-medium {
+    font-family: var(--font-primary);
+    font-weight: 500;
+  }
+
+  .font-primary-semibold {
+    font-family: var(--font-primary);
+    font-weight: 600;
+  }
+
+  .font-primary-bold {
+    font-family: var(--font-primary);
     font-weight: 700;
-    font-style: normal;
   }
 
-  .font-libre-italic {
-    font-family: var(--font-libre-baskerville);
+  .font-secondary {
+    font-family: var(--font-secondary);
+  }
+
+  .font-secondary-regular {
+    font-family: var(--font-secondary);
+    font-weight: 400;
+  }
+
+  .font-secondary-bold {
+    font-family: var(--font-secondary);
+    font-weight: 700;
+  }
+
+  .font-secondary-italic {
+    font-family: var(--font-secondary);
     font-weight: 400;
     font-style: italic;
   }

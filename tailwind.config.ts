@@ -19,7 +19,8 @@ const config = {
     },
     extend: {
       fontFamily: {
-        libre: ['var(--font-libre-baskerville)'],
+        primary: ['var(--font-primary)'],
+        secondary: ['var(--font-secondary)'],
       },
       colors: {
         border: "hsl(var(--border))",

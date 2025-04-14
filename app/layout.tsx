@@ -9,7 +9,7 @@ const libreBaskerville = Libre_Baskerville({
   subsets: ["latin"],
   weight: ["400", "700"],
   style: ["normal", "italic"],
-  variable: "--font-libre-baskerville",
+  variable: "--font-secondary",
 });
 
 export default function RootLayout({
