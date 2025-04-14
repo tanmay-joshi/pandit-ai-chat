@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "../../../lib/prisma";
 import { authOptions } from "../auth/[...nextauth]/route";
+import { logger } from "../../../lib/logger";
 
 type Kundali = {
   id: string;
@@ -78,10 +79,13 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+    logger.debug("Chat creation request body:", body);
+    
     const { title = "New Consultation", agentId, kundaliIds } = body;
 
     // Validate required fields
     if (!kundaliIds || !Array.isArray(kundaliIds) || kundaliIds.length === 0) {
+      logger.error("Validation error - kundaliIds:", kundaliIds);
       return NextResponse.json(
         { error: "At least one Kundali selection is required" },
         { status: 400 }
@@ -152,7 +156,7 @@ export async function POST(req: NextRequest) {
       chatTitle = "Consultation with multiple charts";
     }
 
-    // Create new chat
+    // Create new chat without suggestedQuestions
     const newChat = await prisma.chat.create({
       data: {
         title: chatTitle,
@@ -163,6 +167,13 @@ export async function POST(req: NextRequest) {
         agent: true,
       },
     });
+    
+    logger.debug("Created new chat:", newChat.id);
+    
+    // Initialize suggestedQuestions field separately using raw SQL
+    await prisma.$executeRaw`
+      UPDATE "Chat" SET "suggestedQuestions" = null WHERE id = ${newChat.id}
+    `;
     
     // Create kundali relations
     for (const kundaliId of kundaliIds) {
@@ -180,12 +191,14 @@ export async function POST(req: NextRequest) {
     });
     
     // Return the chat with agent and kundalis
+    logger.info("Chat creation complete:", newChat.id);
     return NextResponse.json({
       ...newChat,
-      kundalis: chatKundalis
+      kundalis: chatKundalis,
+      suggestedQuestions: null
     });
   } catch (error) {
-    console.error("Error creating chat:", error);
+    logger.error("Error creating chat:", error);
     return NextResponse.json(
       { error: "Failed to create chat" },
       { status: 500 }
