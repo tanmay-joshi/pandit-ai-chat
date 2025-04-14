@@ -9,7 +9,6 @@ export function middleware(request: NextRequest) {
   // Add headers to prevent caching of API responses
   if (request.nextUrl.pathname.startsWith('/api/')) {
     response.headers.set('Cache-Control', 'no-store, max-age=0');
-    response.headers.set('Content-Type', 'application/json');
   }
 
   return response;
