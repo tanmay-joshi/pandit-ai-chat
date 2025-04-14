@@ -13,6 +13,7 @@ import { Plus, ArrowLeft, Star, Clock, Users } from "lucide-react";
 import { AgentCard } from "@/components/AgentCard";
 import { KundaliCard } from "@/components/KundaliCard";
 import type { Kundali } from "@/types/kundali";
+import { logger } from "@/lib/logger";
 
 type Agent = {
   id: string;
@@ -112,20 +113,35 @@ export default function NewChatPage() {
 
     try {
       setIsCreatingChat(true);
+      logger.info("Creating chat with agent & kundali:", {
+        agentId: selectedAgent.id,
+        kundaliId: selectedKundali.id
+      });
+      
+      const requestBody = {
+        agentId: selectedAgent.id,
+        kundaliIds: [selectedKundali.id],
+      };
+      
+      logger.debug("Request body:", requestBody);
+      
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          agentId: selectedAgent.id,
-          kundaliId: selectedKundali.id,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
-      if (!res.ok) throw new Error("Failed to create chat");
+      if (!res.ok) {
+        const errorData = await res.json();
+        logger.error("Chat creation failed:", errorData);
+        throw new Error(errorData.error || "Failed to create chat");
+      }
 
-      const { chatId } = await res.json();
-      router.push(`/chat/${chatId}`);
+      const createdChat = await res.json();
+      logger.info("Chat created successfully:", createdChat.id);
+      router.push(`/chat/${createdChat.id}`);
     } catch (err) {
+      logger.error("Error creating chat:", err);
       setError(err instanceof Error ? err.message : "Failed to create chat");
       setIsCreatingChat(false);
     }
