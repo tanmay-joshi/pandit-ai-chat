@@ -104,6 +104,10 @@ model Agent {
   messageCost   Int      @default(10) // Cost in credits per message for this agent
   tags          String?  // Comma-separated tags like "basic", "experienced", "expert"
   kundaliLimit  Int      @default(1)  // Number of kundalis this agent can consume (default: 1)
+  expertiseLevel String  @default("BEGINNER") // BEGINNER, INTERMEDIATE, EXPERT
+  rating        Float    @default(5.0)  // Rating out of 5
+  totalReviews  Int      @default(0)   // Total number of reviews
+  todayChats    Int      @default(0)   // Number of chats today
   chats         Chat[]
 }
 

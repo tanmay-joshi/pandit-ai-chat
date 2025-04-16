@@ -25,7 +25,7 @@ export default function RootLayout({
       )}>
         <Providers>
           <NavigationBar />
-          <main className="min-h-screen md:pl-24">
+          <main className="min-h-screen pb-20">
             {children}
           </main>
           <Toaster position="bottom-right" />
