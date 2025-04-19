@@ -32,7 +32,7 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get the chat data including suggestedQuestions
+    // Get the chat data including all related data in a single query
     const chat = await prisma.chat.findUnique({
       where: { id },
       include: {
@@ -57,11 +57,6 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    // Get the suggestedQuestions field directly
-    const chatWithQuestions = await prisma.$queryRaw`
-      SELECT "suggestedQuestions" FROM "Chat" WHERE id = ${id}
-    `;
-
     // Format kundalis data to match expected type
     const kundalis = chat.kundalis.map(k => k.kundali);
 
@@ -69,9 +64,7 @@ export async function GET(
     const response = {
       ...chat,
       kundalis,
-      suggestedQuestions: Array.isArray(chatWithQuestions) && chatWithQuestions.length > 0 
-        ? chatWithQuestions[0].suggestedQuestions 
-        : null
+      suggestedQuestions: chat.suggestedQuestions ? JSON.parse(chat.suggestedQuestions) : null
     };
 
     logger.debug('Chat data fetched successfully', { 

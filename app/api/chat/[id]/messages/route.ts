@@ -137,11 +137,15 @@ export async function POST(
     }
     
     // Fetch associated kundalis for this chat
-    const chatKundalis = await prisma.$queryRaw<Kundali[]>`
-      SELECT k.* FROM "Kundali" k
-      JOIN "ChatKundali" ck ON k.id = ck.kundaliId
-      WHERE ck.chatId = ${chatId}
-    `;
+    const chatKundalis = await prisma.kundali.findMany({
+      where: {
+        chats: {
+          some: {
+            chatId: chatId
+          }
+        }
+      }
+    });
 
     const { content } = await req.json();
 
@@ -334,7 +338,10 @@ export async function POST(
                       data: { content: cleanedContent }
                     }),
                     // Update chat with suggested questions
-                    prisma.$executeRaw`UPDATE "Chat" SET "suggestedQuestions" = ${questionsJson} WHERE id = ${chatId}`
+                    prisma.chat.update({
+                      where: { id: chatId },
+                      data: { suggestedQuestions: questionsJson }
+                    })
                   ]);
                   
                   // Don't try to send anything through the stream here - it's already closed

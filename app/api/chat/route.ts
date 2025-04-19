@@ -162,26 +162,26 @@ export async function POST(req: NextRequest) {
         title: chatTitle,
         userId: user.id,
         agentId: agentId || null,
+        suggestedQuestions: null,
+        kundalis: {
+          create: kundaliIds.map(kundaliId => ({
+            id: crypto.randomUUID(),
+            kundaliId: kundaliId,
+            createdAt: new Date()
+          }))
+        }
       },
       include: {
         agent: true,
+        kundalis: {
+          include: {
+            kundali: true
+          }
+        }
       },
     });
     
     logger.debug("Created new chat:", newChat.id);
-    
-    // Initialize suggestedQuestions field separately using raw SQL
-    await prisma.$executeRaw`
-      UPDATE "Chat" SET "suggestedQuestions" = null WHERE id = ${newChat.id}
-    `;
-    
-    // Create kundali relations
-    for (const kundaliId of kundaliIds) {
-      await prisma.$executeRaw`
-        INSERT INTO "ChatKundali" (id, chatId, kundaliId, createdAt)
-        VALUES (${crypto.randomUUID()}, ${newChat.id}, ${kundaliId}, ${new Date()})
-      `;
-    }
     
     // Retrieve all kundalis for this chat
     const chatKundalis = await prisma.kundali.findMany({

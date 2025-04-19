@@ -52,30 +52,23 @@ export async function PATCH(
       ? JSON.stringify(suggestedQuestions) 
       : null;
 
-    // Update the message content
-    const updatedMessage = await prisma.message.update({
-      where: { id: messageId },
-      data: { content: content || message.content }
-    });
-
-    // Update the chat with suggested questions
-    if (suggestedQuestionsData) {
-      await prisma.$executeRaw`UPDATE "Chat" SET "suggestedQuestions" = ${suggestedQuestionsData} WHERE id = ${chatId}`;
-    }
-
-    // Get the updated chat data
-    const chatData = await prisma.$queryRaw`
-      SELECT "suggestedQuestions" FROM "Chat" WHERE id = ${chatId}
-    `;
-
-    // Safely access the result
-    const chatSuggestedQuestions = Array.isArray(chatData) && chatData.length > 0 
-      ? chatData[0].suggestedQuestions 
-      : null;
+    // Update both message and chat in a transaction
+    const [updatedMessage, updatedChat] = await prisma.$transaction([
+      // Update message content
+      prisma.message.update({
+        where: { id: messageId },
+        data: { content: content || message.content }
+      }),
+      // Update chat with suggested questions
+      prisma.chat.update({
+        where: { id: chatId },
+        data: { suggestedQuestions: suggestedQuestionsData }
+      })
+    ]);
 
     return NextResponse.json({
       message: updatedMessage,
-      chatSuggestedQuestions
+      chatSuggestedQuestions: updatedChat.suggestedQuestions
     });
     
   } catch (error) {
@@ -114,22 +107,24 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get the chat with suggested questions
-    const chat = await prisma.$queryRaw`
-      SELECT id, "userId", "suggestedQuestions" 
-      FROM "Chat" 
-      WHERE id = ${chatId}
-    `;
+    // Get the chat with all necessary data
+    const chat = await prisma.chat.findUnique({
+      where: { id: chatId },
+      select: {
+        id: true,
+        userId: true,
+        suggestedQuestions: true
+      }
+    });
 
-    if (!chat || !Array.isArray(chat) || chat.length === 0) {
+    if (!chat) {
       logger.error(`Chat ${chatId} not found`);
       return NextResponse.json({ error: "Chat not found" }, { status: 404 });
     }
 
-    const chatData = chat[0];
-    logger.debug(`Chat data for ${chatId}:`, chatData);
+    logger.debug(`Chat data for ${chatId}:`, chat);
 
-    if (chatData.userId !== user.id) {
+    if (chat.userId !== user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -147,12 +142,12 @@ export async function GET(
     }
 
     logger.debug(`Message ${messageId} found:`, message);
-    logger.debug(`Chat ${chatId} suggested questions:`, chatData.suggestedQuestions);
+    logger.debug(`Chat ${chatId} suggested questions:`, chat.suggestedQuestions);
 
     // Create response and set headers
     const response = NextResponse.json({
       message,
-      chatSuggestedQuestions: chatData.suggestedQuestions
+      chatSuggestedQuestions: chat.suggestedQuestions
     }, { status: 200 });
     
     // Set headers to prevent caching
