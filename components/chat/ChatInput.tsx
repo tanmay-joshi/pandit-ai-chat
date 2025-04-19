@@ -1,7 +1,7 @@
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
-import { Agent } from "../../types/chat";
+import { Agent } from "@/types/agent";
 import SuggestedQuestions from "@/components/SuggestedQuestions";
 
 interface ChatInputProps {

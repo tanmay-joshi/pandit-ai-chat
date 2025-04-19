@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { StreamingTextResponse } from "ai";
 import { prisma } from "../../../../../lib/prisma";
-import { authOptions } from "../../../auth/[...nextauth]/route";
+import { authOptions } from "../../../../../lib/auth";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";

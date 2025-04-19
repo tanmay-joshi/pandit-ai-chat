@@ -1,4 +1,5 @@
-import { Message, Kundali } from "@/types/chat";
+import { Message } from "@/types/message";
+import { Kundali } from "@/types/kundali";
 import { Agent } from "@/types/agent";
 import { SelectionStep } from "@/types/enums";
 import { MessageBubble } from "./MessageBubble";

@@ -1,4 +1,4 @@
-import { Message } from "@/types/chat";
+import { Message } from "@/types/message";
 import { Agent } from "@/types/agent";
 import { formatDistanceToNow } from "date-fns";
 import { Avatar } from "../ui/avatar";

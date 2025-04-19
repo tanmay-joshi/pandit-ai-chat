@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Agent, Kundali } from "../../types/chat";
+import { Agent } from "@/types/agent";
+import { Kundali } from "@/types/kundali";
 import { ChevronLeft } from "lucide-react";
 
 interface ChatHeaderProps {
