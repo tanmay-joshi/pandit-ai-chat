@@ -9,6 +9,10 @@ const nextConfig = {
       'drive.google.com'
     ],
   },
+  output: 'standalone',
+  experimental: {
+    serverActions: true,
+  },
 };
 
 module.exports = nextConfig; 

@@ -181,7 +181,7 @@ export async function POST(
       let kundaliInfo = `\nKUNDALI INFORMATION:\n`;
       
       // Add each kundali to the prompt
-      chatKundalis.forEach((kundali, index) => {
+      chatKundalis.forEach((kundali: Kundali, index: number) => {
         kundaliInfo += `\nKUNDALI ${index + 1}:\n`;
         kundaliInfo += `Full Name: ${kundali.fullName}\n`;
         kundaliInfo += `Date of Birth: ${new Date(kundali.dateOfBirth).toLocaleString()}\n`;

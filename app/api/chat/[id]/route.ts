@@ -58,7 +58,7 @@ export async function GET(
     }
 
     // Format kundalis data to match expected type
-    const kundalis = chat.kundalis.map(k => k.kundali);
+    const kundalis = chat.kundalis.map((k: { kundali: any }) => k.kundali);
 
     // Create response with all data
     const response = {
