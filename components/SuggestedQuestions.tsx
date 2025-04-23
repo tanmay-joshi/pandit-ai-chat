@@ -31,9 +31,9 @@ export default function SuggestedQuestions({
   logger.info("Rendering SuggestedQuestions with", questions.length, "questions");
 
   return (
-    <div className="p-3 mb-2 neu-inset rounded-xl">
-      <div className="flex items-center mb-2">
-        <p className="text-xs text-neutral-600 font-medium">
+    <div className="p-4">
+      <div className="mb-2">
+        <p className="text-sm text-gray-600">
           {isLoading ? "Loading suggestions..." : "Suggested questions:"}
         </p>
       </div>
@@ -45,7 +45,7 @@ export default function SuggestedQuestions({
               logger.info("Question clicked:", question);
               onQuestionClick(question);
             }}
-            className="text-xs neu-button neu-button-hover px-3 py-1.5 rounded-full transition-colors"
+            className="px-4 py-2 bg-[#F5F2EE] rounded-full text-sm hover:bg-gray-200 transition-colors"
             disabled={isLoading}
           >
             {question}
