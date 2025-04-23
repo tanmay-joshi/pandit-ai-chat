@@ -319,7 +319,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         agent={chat.agent}
         kundalis={chat.kundalis}
       />
-      <div className="flex-1 overflow-y-auto bg-blue">
+      <div className="flex-1 overflow-y-auto pb-40">
         <ChatMessages
           messages={chat.messages}
           agent={chat.agent ?? null}
@@ -331,17 +331,6 @@ export default function ChatPage({ params }: { params: { id: string } }) {
           step={step}
           onScrollBottom={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
         />
-        
-        {/* Show suggested questions only when not streaming */}
-        {!isStreaming && suggestedQuestions && suggestedQuestions.length > 0 && (
-          <div className="mx-auto max-w-4xl mb-4 px-4">
-            <SuggestedQuestions
-              questions={suggestedQuestions}
-              onQuestionClick={handleSuggestedQuestionClick}
-              isLoading={false}
-            />
-          </div>
-        )}
       </div>
       
       <ChatInput
@@ -351,8 +340,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         sending={sending}
         step={step}
         agent={chat.agent}
-        suggestedQuestions={[]} // We're handling suggested questions above now
-        onSuggestedQuestionClick={() => {}} // No-op since we handle it above
+        suggestedQuestions={suggestedQuestions}
+        onSuggestedQuestionClick={handleSuggestedQuestionClick}
       />
 
       <InsufficientCreditsDialog

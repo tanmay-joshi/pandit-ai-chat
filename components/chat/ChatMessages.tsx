@@ -46,7 +46,7 @@ export function ChatMessages({
   }, [messages, streamedContent]);
   
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-4xl pb-40">
       {messages.map((message, index) => {
         const isLastMessage = index === messages.length - 1;
         

@@ -31,10 +31,10 @@ export default function SuggestedQuestions({
   logger.info("Rendering SuggestedQuestions with", questions.length, "questions");
 
   return (
-    <div className="p-4">
+    <div className="p-4 border-b border-gray-100">
       <div className="mb-2">
         <p className="text-sm text-gray-600">
-          {isLoading ? "Loading suggestions..." : "Suggested questions:"}
+          {isLoading ? "Loading suggestions..." : "Try asking:"}
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
