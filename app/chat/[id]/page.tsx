@@ -31,6 +31,55 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const [streamedContent, setStreamedContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Function to safely handle suggested questions
+  const parseSuggestedQuestions = (questionsData: any): string[] => {
+    // If it's already an array, return it
+    if (Array.isArray(questionsData)) {
+      logger.info("Questions are already an array:", questionsData);
+      return questionsData;
+    }
+    
+    // If it's a string, try to parse it
+    if (typeof questionsData === 'string') {
+      try {
+        // Try parsing as JSON
+        const parsed = JSON.parse(questionsData);
+        logger.info("Successfully parsed questions:", parsed);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        // If it's not valid JSON but appears to be an array-like string (could be from error logs), 
+        // handle it manually
+        if (questionsData.includes('[') && questionsData.includes(']')) {
+          try {
+            // Extract what appears to be the array content
+            const arrayContent = questionsData.substring(
+              questionsData.indexOf('[') + 1, 
+              questionsData.lastIndexOf(']')
+            );
+            
+            // Split by commas and clean up entries
+            const questions = arrayContent
+              .split(',')
+              .map(q => q.trim().replace(/^['"]|['"]$/g, ''))
+              .filter(q => q.length > 0);
+              
+            logger.info("Manually parsed questions:", questions);
+            return questions;
+          } catch (e2) {
+            logger.error("Error in manual parsing:", e2);
+            return [];
+          }
+        }
+        
+        logger.error("Error parsing suggested questions:", e);
+        return [];
+      }
+    }
+    
+    // If it's neither an array nor a string, return empty array
+    return [];
+  };
+
   // Function to fetch the latest chat data including suggested questions
   const fetchLatestChatData = useCallback(async () => {
     try {
@@ -49,14 +98,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       
       // Update suggested questions if available
       if (chatData.suggestedQuestions) {
-        try {
-          const parsedQuestions = JSON.parse(chatData.suggestedQuestions);
-          logger.info("Setting suggested questions:", parsedQuestions);
-          setSuggestedQuestions(parsedQuestions);
-        } catch (e) {
-          logger.error("Error parsing suggested questions:", e, chatData.suggestedQuestions);
-          setSuggestedQuestions([]);
-        }
+        setSuggestedQuestions(parseSuggestedQuestions(chatData.suggestedQuestions));
       } else {
         logger.debug("No suggested questions in chat data");
         setSuggestedQuestions([]);
@@ -93,13 +135,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
           
           // Set suggested questions if available
           if (data.suggestedQuestions) {
-            try {
-              const parsedQuestions = JSON.parse(data.suggestedQuestions);
-              logger.info("Setting initial suggested questions:", parsedQuestions);
-              setSuggestedQuestions(parsedQuestions);
-            } catch (e) {
-              logger.error("Error parsing initial suggested questions:", e);
-            }
+            setSuggestedQuestions(parseSuggestedQuestions(data.suggestedQuestions));
           }
         } catch (err) {
           setError(err instanceof Error ? err.message : "Failed to load chat");
@@ -167,14 +203,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             
             // Update suggested questions state for the UI
             if (chatSuggestedQuestions) {
-              try {
-                const parsedQuestions = JSON.parse(chatSuggestedQuestions);
-                logger.info("Parsed suggested questions:", parsedQuestions);
-                setSuggestedQuestions(parsedQuestions);
-              } catch (e) {
-                logger.error("Error parsing suggested questions:", e, chatSuggestedQuestions);
-                setSuggestedQuestions([]);
-              }
+              setSuggestedQuestions(parseSuggestedQuestions(chatSuggestedQuestions));
             } else {
               logger.info("No suggested questions in response");
               setSuggestedQuestions([]);
@@ -352,7 +381,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       />
 
       {error && (
-        <div className="fixed bottom-4 right-4 neu-error">
+        <div className="fixed bottom-24 right-4 neu-error">
           {error}
         </div>
       )}

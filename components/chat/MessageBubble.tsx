@@ -27,55 +27,65 @@ export function MessageBubble({
   return (
     <div
       className={cn(
-        "flex items-start py-3",
-        isAssistant ? "flex-row" : "flex-row-reverse"
+        "flex w-full items-start space-x-4 py-4",
+        isAssistant ? "justify-start" : "justify-end"
       )}
     >
-      {/* {isAssistant ? (
-        <Avatar
-          className="neu-avatar"
-          src={agent?.avatarUrl || ""}
-          alt={agent?.name || "AI"}
-          fallback={agent?.name?.[0] || "AI"}
-        />
-      ) : (
-        <Avatar
-          src=""
-          alt="You"
-          fallback="U"
-        />
-      )} */}
+      {isAssistant && (
+        <div className="flex-shrink-0">
+          <Avatar
+            className="h-10 w-10 rounded-full bg-[#F5F2EE] text-center font-serif"
+            src={agent?.avatar || ""}
+            alt={agent?.name || "AI"}
+            fallback={agent?.name?.[0] || "AI"}
+          />
+        </div>
+      )}
 
       <div
         className={cn(
-          "rounded-xl p-3 max-w-[80%]",
+          "max-w-[75%] rounded-t-[2rem] p-6 shadow-sm",
           isAssistant
-            ? "neu-card "
-            : "neu-inset-2"
+            ? "bg-[var(--bg-beige)] border border-gray-200"
+            : "bg-[var(--bg-white)] border border-gray-300 ml-auto mr-4"
         )}
       >
         <div className={cn(
-          "whitespace-pre-wrap break-words",
-          isAssistant
-            ? "text-neutral-800"
-            : "text-neutral-800"
-        )}>{displayContent}</div>
+          "whitespace-pre-wrap break-words leading-relaxed",
+          "font-primary-regular text-[var(--text-primary)]"
+        )}>
+          {displayContent}
+        </div>
+        
         {isStreaming && isLastMessage && (
-          <div className="mt-2">
+          <div className="mt-4">
             <Loading size="sm" />
           </div>
         )}
-        <div
-          className={cn(
-            "text-xs mt-2",
-            isAssistant
-              ? "text-neutral-600"
-              : "text-neutral-600"
+        
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-xs font-primary-regular text-[var(--text-secondary)]">
+            {timestamp}
+          </span>
+          
+          {message.cost > 0 && (
+            <span className="text-xs font-primary-medium text-[var(--text-secondary)]">
+              {message.cost} credits
+            </span>
           )}
-        >
-          {timestamp}
         </div>
       </div>
+      
+      {!isAssistant && (
+        <div className="flex-shrink-0">
+          <Avatar
+            className="h-10 w-10 rounded-full bg-[var(--accent-dark)] text-white text-center font-primary-medium"
+            src=""
+            alt="You"
+            fallback="Y"
+          />
+        </div>
+      )}
     </div>
   );
 } 

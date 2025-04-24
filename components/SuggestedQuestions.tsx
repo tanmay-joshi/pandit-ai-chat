@@ -33,7 +33,7 @@ export default function SuggestedQuestions({
   return (
     <div className="p-4 border-b border-gray-100">
       <div className="mb-2">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm neu-text">
           {isLoading ? "Loading suggestions..." : "Try asking:"}
         </p>
       </div>
@@ -45,7 +45,7 @@ export default function SuggestedQuestions({
               logger.info("Question clicked:", question);
               onQuestionClick(question);
             }}
-            className="px-4 py-2 bg-[#F5F2EE] rounded-full text-sm hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 bg-[var(--bg-beige)] rounded-full text-sm hover:bg-opacity-80 transition-colors"
             disabled={isLoading}
           >
             {question}

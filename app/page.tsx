@@ -56,9 +56,9 @@ export default function Home() {
 
       {/* Main Content Container */}
       <main>
-        {/* Hero Section */}
+      {/* Hero Section */}
         <section className="py-24 md:py-32">
-          <div className="container mx-auto px-6 max-w-6xl">
+        <div className="container mx-auto px-6 max-w-6xl">
             <div className="max-w-3xl mx-auto text-center space-y-8">
               <h1 className="text-5xl md:text-6xl font-serif leading-tight">
                 Your Personal AI Spiritual Guide
@@ -88,9 +88,9 @@ export default function Home() {
                         type="submit"
                         className="bg-gray-900 text-white rounded-full p-3 hover:bg-gray-800 transition-colors"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-                        </svg>
+                  </svg>
                       </button>
                     </div>
                   </form>
@@ -301,13 +301,13 @@ export default function Home() {
                       Choose from our specialized AI Pandits for career, relationships, spirituality, or general guidance.
                     </p>
                     <div className="aspect-video relative overflow-hidden bg-[#F5F2EE] rounded-t-[2rem]">
-                      <Image 
-                        src="/images/pandits/pandit.png" 
+                <Image 
+                  src="/images/pandits/pandit.png" 
                         alt="Select Pandit Screenshot" 
-                        fill 
-                        style={{objectFit: "cover"}}
+                  fill 
+                  style={{objectFit: "cover"}}
                         className="rounded-t-[2rem]"
-                      />
+                />
                     </div>
                   </div>
                 </div>
@@ -331,13 +331,13 @@ export default function Home() {
                         className="rounded-t-[2rem]"
                       />
                     </div>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </section>
-        
+        </div>
+      </section>
+
         {/* Pricing Section */}
         <section id="pricing" className="py-24 bg-[#F5F2EE]">
           <div className="container mx-auto px-6 max-w-6xl">
@@ -432,7 +432,7 @@ export default function Home() {
                       Get Started
                     </Link>
                   </div>
-                </div>
+            </div>
               </div>
             </div>
             
@@ -449,46 +449,46 @@ export default function Home() {
                     By leveraging AI technology, we've dramatically reduced the cost of spiritual guidance while maintaining the highest quality of insights. We believe everyone should have access to authentic Vedic wisdom.
                   </p>
                 </div>
-              </div>
             </div>
           </div>
-        </section>
-        
+        </div>
+      </section>
+
         {/* Testimonials Section */}
         <section id="testimonials" className="py-24 bg-white">
-          <div className="container mx-auto px-6 max-w-6xl">
+        <div className="container mx-auto px-6 max-w-6xl">
             <div className="text-center mb-20 space-y-4">
               <h2 className="text-4xl font-serif">What Our Users Say</h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Discover how PanditAI is transforming spiritual guidance
-              </p>
-            </div>
-            
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Discover how PanditAI is transforming spiritual guidance
+            </p>
+          </div>
+          
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
               {/* Testimonial 1 */}
               <div className="bg-[#F5F2EE] p-12 rounded-t-[2rem]">
                 <div className="space-y-6">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center font-serif">
-                      R
-                    </div>
-                    <div>
+                  R
+                </div>
+                <div>
                       <h4 className="font-serif">Rahul M.</h4>
                       <div className="text-sm text-gray-600">Using PanditAI for 6 months</div>
                     </div>
                   </div>
                   <p className="text-gray-600 italic">"The insights I received were incredibly accurate. It's like having a personal astrologer available anytime! PanditAI helped me make crucial decisions about my career path."</p>
                 </div>
-              </div>
-              
+            </div>
+            
               {/* Testimonial 2 */}
               <div className="bg-[#F5F2EE] p-12 rounded-t-[2rem]">
                 <div className="space-y-6">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center font-serif">
-                      P
-                    </div>
-                    <div>
+                  P
+                </div>
+                <div>
                       <h4 className="font-serif">Priya S.</h4>
                       <div className="text-sm text-gray-600">Using PanditAI for 3 months</div>
                     </div>
@@ -511,16 +511,16 @@ export default function Home() {
                   </div>
                   <p className="text-gray-600 italic">"The business advice from Vyapar Guru helped me make crucial decisions for my startup. The AI understands nuances that surprised me, and the timing suggestions were spot on."</p>
                 </div>
-              </div>
-              
+            </div>
+            
               {/* Testimonial 4 */}
               <div className="bg-[#F5F2EE] p-12 rounded-t-[2rem]">
                 <div className="space-y-6">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center font-serif">
-                      A
-                    </div>
-                    <div>
+                  A
+                </div>
+                <div>
                       <h4 className="font-serif">Anita K.</h4>
                       <div className="text-sm text-gray-600">Using PanditAI for one year</div>
                     </div>
@@ -568,13 +568,13 @@ export default function Home() {
                 <div className="w-2 h-2 bg-gray-900 rounded-full hidden md:block"></div>
                 <div className="font-serif text-xl">100,000+ Consultations Delivered</div>
               </div>
-            </div>
           </div>
-        </section>
-        
-        {/* FAQ Section */}
+        </div>
+      </section>
+      
+      {/* FAQ Section */}
         <section className="py-24 bg-[#F5F2EE]">
-          <div className="container mx-auto px-6 max-w-4xl">
+        <div className="container mx-auto px-6 max-w-4xl">
             <div className="text-center mb-20 space-y-4">
               <h2 className="text-4xl font-serif">Frequently Asked Questions</h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -601,35 +601,35 @@ export default function Home() {
               <div className="bg-white p-12 rounded-t-[2rem]">
                 <h3 className="text-xl font-serif mb-4">How does PanditAI compare to consulting with a traditional pandit?</h3>
                 <p className="text-gray-600">PanditAI offers 24/7 availability, instant responses, and consistent guidance based on classic texts - all at a fraction of the cost of traditional consultations. While we value the wisdom of traditional pandits, our service provides convenience and accessibility that traditional methods cannot match.</p>
-              </div>
-              
+            </div>
+            
               <div className="bg-white p-12 rounded-t-[2rem]">
                 <h3 className="text-xl font-serif mb-4">Can I change or cancel my subscription plan?</h3>
                 <p className="text-gray-600">Yes, you can easily upgrade, downgrade, or cancel your subscription at any time from your account settings. Changes take effect at the beginning of your next billing cycle, and we offer a 7-day money-back guarantee for all new subscriptions.</p>
-              </div>
-              
+            </div>
+            
               <div className="bg-white p-12 rounded-t-[2rem]">
                 <h3 className="text-xl font-serif mb-4">What if I need help using the platform?</h3>
                 <p className="text-gray-600">Our support team is available via email and chat to assist with any questions. Plus and Premium subscribers receive priority support. We also offer detailed guides and tutorials to help you get the most from your consultations.</p>
               </div>
-            </div>
           </div>
-        </section>
-        
+        </div>
+      </section>
+      
         {/* Final CTA Section */}
         <section className="py-24 bg-white">
-          <div className="container mx-auto px-6 text-center max-w-4xl">
+        <div className="container mx-auto px-6 text-center max-w-4xl">
             <h2 className="text-4xl font-serif mb-6">Start Your Spiritual Journey Today</h2>
             <p className="text-lg mb-12 max-w-2xl mx-auto text-gray-600">
               Get personalized guidance from your AI Pandit and unlock cosmic insights about your life path.
-            </p>
-            <Link
-              href="/auth/signin"
+          </p>
+          <Link
+            href="/auth/signin"
               className="rounded-full bg-gray-900 px-12 py-4 text-lg font-serif text-white transition-all hover:bg-gray-800 inline-flex items-center gap-3"
             >
               Get Your Personalized Reading Now
               <div className="w-2 h-2 bg-white rounded-full"></div>
-            </Link>
+          </Link>
             <div className="mt-12 flex flex-col md:flex-row items-center justify-center gap-12">
               <div className="flex items-center gap-3 text-gray-600">
                 <div className="w-4 h-4 rounded-full border-2 border-gray-900"></div>
@@ -644,10 +644,10 @@ export default function Home() {
                 Cancel anytime
               </div>
             </div>
-          </div>
-        </section>
+        </div>
+      </section>
       </main>
-      
+
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-24">
         <div className="container mx-auto px-6">
