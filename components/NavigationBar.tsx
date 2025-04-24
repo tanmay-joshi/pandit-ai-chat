@@ -7,6 +7,13 @@ import { cn } from "@/lib/utils";
 
 export function NavigationBar() {
   const pathname = usePathname();
+  
+  // Hide navigation on individual chat pages
+  const isChatDetailPage = pathname.match(/^\/chat\/[^/]+$/) && pathname !== "/chat/new";
+  
+  if (isChatDetailPage) {
+    return null;
+  }
 
   const navigationItems = [
     {

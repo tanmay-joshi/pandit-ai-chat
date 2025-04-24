@@ -29,13 +29,13 @@ export function ChatInput({
   const hasQuestions = suggestedQuestions && suggestedQuestions.length > 0;
   
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-[var(--bg-white)] to-transparent pb-20 pt-4">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-[var(--bg-white)] to-transparent pt-4">
       <div className="mx-auto max-w-4xl px-4">
         {/* Input Box */}
         <div className="rounded-t-[2rem] bg-[var(--bg-white)] p-6 shadow-custom border border-gray-200">
           {/* Suggested Questions - now inside the input container */}
           {hasQuestions && (
-            <div className="mb-5 overflow-x-auto pb-2 -mx-1 px-1">
+            <div className="mb-5 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
               <div className="flex space-x-2 w-max min-w-full">
                 {suggestedQuestions.map((question, index) => (
                   <button 

@@ -201,9 +201,11 @@ export default function ChatPage({ params }: { params: { id: string } }) {
               return updatedChat;
             });
             
-            // Update suggested questions state for the UI
+            // Immediately update suggested questions state for the UI
             if (chatSuggestedQuestions) {
-              setSuggestedQuestions(parseSuggestedQuestions(chatSuggestedQuestions));
+              const parsedQuestions = parseSuggestedQuestions(chatSuggestedQuestions);
+              logger.info("Parsed suggested questions:", parsedQuestions);
+              setSuggestedQuestions(parsedQuestions);
             } else {
               logger.info("No suggested questions in response");
               setSuggestedQuestions([]);
@@ -214,22 +216,24 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         } catch (err) {
           logger.error("Error fetching updated message:", err);
         }
-        
-        // Fetch the full chat again to ensure we have the latest data
-        await fetchLatestChatData();
       }
       
       // Reset streaming state after a short delay to ensure smooth transition
       setTimeout(() => {
         setIsStreaming(false);
+        
+        // Ensure we have the latest data after streaming ends
+        fetchLatestChatData();
       }, 100);
     }
-  }, [params.id, fetchLatestChatData]);
+  }, [params.id, fetchLatestChatData, parseSuggestedQuestions]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !chat || sending) return;
 
+    // Clear suggested questions when sending a new message
+    setSuggestedQuestions([]);
     setSending(true);
     setError(null);
     setIsStreaming(true);

@@ -46,7 +46,7 @@ export function ChatMessages({
   }, [messages, streamedContent]);
   
   return (
-    <div className="mx-auto max-w-4xl px-4 pb-24 pt-4">
+    <div className="mx-auto max-w-4xl px-4 pb-8 pt-4">
       {messages.length === 0 ? (
         <div className="flex h-full flex-col items-center justify-center py-24 text-center">
           <div className="mb-6 rounded-full bg-[var(--bg-beige)] p-6">
