@@ -13,7 +13,7 @@ export default function Home() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      router.push("/chat/new");
+      router.push("/home");
     } else if (status === "unauthenticated") {
       setIsLoading(false);
     }

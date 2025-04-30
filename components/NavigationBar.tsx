@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { MessageSquare, User, Wallet, BookOpen, Plus } from "lucide-react";
+import { Home, MessageSquare, User, Wallet, BookOpen, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function NavigationBar() {
@@ -17,9 +17,15 @@ export function NavigationBar() {
 
   const navigationItems = [
     {
+      href: "/home",
+      icon: Home,
+      label: "Home",
+      isActive: pathname === "/home"
+    },
+    {
       href: "/chat",
       icon: MessageSquare,
-      label: "All Chats",
+      label: "Chats",
       isActive: pathname === "/chat" || (pathname.startsWith("/chat/") && pathname !== "/chat/new")
     },
     {
@@ -27,12 +33,6 @@ export function NavigationBar() {
       icon: BookOpen,
       label: "Kundali",
       isActive: pathname === "/profile/kundali"
-    },
-    {
-      href: "/chat/new",
-      icon: Plus,
-      label: "New Chat",
-      isActive: pathname === "/chat/new"
     },
     {
       href: "/profile",
@@ -49,40 +49,36 @@ export function NavigationBar() {
   ];
 
   return (
-    <div className="fixed bottom-6 left-0 right-0 z-50 px-4">
-      <div className="mx-auto max-w-[320px]">
-        <div className="relative flex items-center justify-between rounded-full bg-black/90 px-6 py-3 shadow-lg backdrop-blur-sm">
-          {navigationItems.map((item) => (
+    <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center pointer-events-none">
+      <div className="relative w-full max-w-md flex justify-center">
+        {/* Main nav bar */}
+        <div className="pointer-events-auto flex items-center justify-between w-full max-w-[340px] mx-auto px-2 py-2 bg-white rounded-full shadow-lg border border-gray-100">
+          {navigationItems.map((item, idx) => (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "group relative flex flex-col items-center transition-all duration-200",
-                item.isActive && "before:absolute before:-top-[6px] before:h-1 before:w-1 before:rounded-full before:bg-red-500"
+                "relative flex items-center justify-center transition-all duration-200 h-12",
+                item.isActive ? "bg-black text-white px-4 rounded-full shadow-md" : "text-black/80 px-3",
+                idx === 0 && "ml-1",
+                idx === navigationItems.length - 1 && "mr-1"
               )}
+              style={{ minWidth: item.isActive ? 80 : 44 }}
             >
-              <div className={cn(
-                "relative rounded-full p-1.5 transition-all duration-200",
-                item.isActive && "after:absolute after:inset-0 after:animate-ping after:rounded-full after:bg-red-500/50"
-              )}>
-                <item.icon className={cn(
-                  "h-5 w-5 transition-colors",
-                  item.isActive 
-                    ? "text-red-500 drop-shadow-[0_0_3px_rgba(239,68,68,0.5)]" 
-                    : "text-gray-400 group-hover:text-gray-200"
-                )} />
-              </div>
-              {/* <span className={cn(
-                "absolute -bottom-5 whitespace-nowrap text-[10px] font-primary-medium transition-colors",
-                item.isActive 
-                  ? "text-red-500" 
-                  : "text-gray-400 group-hover:text-gray-200"
-              )}>
-                {item.label}
-              </span> */}
+              <item.icon className={cn("w-5 h-5", item.isActive ? "text-white" : "text-black/80")}/>
+              {item.isActive && (
+                <span className="ml-2 font-primary-medium text-sm hidden sm:inline">{item.label}</span>
+              )}
             </Link>
           ))}
         </div>
+        {/* Floating New Chat Button */}
+        <Link
+          href="/chat/new"
+          className="pointer-events-auto absolute -right-6 top-1/2 -translate-y-1/2 bg-black text-white rounded-full shadow-lg border-4 border-white w-14 h-14 flex items-center justify-center hover:bg-gray-900 transition-all"
+        >
+          <Plus className="w-7 h-7" />
+        </Link>
       </div>
     </div>
   );
