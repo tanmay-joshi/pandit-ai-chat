@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, MessageSquare, Calendar } from "lucide-react";
 import { Chat } from "@/types/chat";
 import { Loading } from "@/components/ui/loading";
+import { ChatCard } from "@/components/ui/ChatCard";
 
 export default function ChatsPage() {
   const { data: session, status } = useSession();
@@ -96,58 +97,7 @@ export default function ChatsPage() {
           ) : (
             <div className="neu-grid">
               {chats.map((chat) => (
-                <Link
-                  key={chat.id}
-                  href={`/chat/${chat.id}`}
-                  className="neu-card neu-card-hover"
-                >
-                  <div className="neu-flex">
-                    {/* Agent Avatar */}
-                    {chat.agent && (
-                      <div className="flex-shrink-0">
-                        {chat.agent.avatar ? (
-                          <div className="neu-avatar">
-                            <Image
-                              src={chat.agent.avatar}
-                              alt={chat.agent.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="neu-avatar flex items-center justify-center">
-                            <span className="neu-title neu-xl">
-                              {chat.agent.name.charAt(0)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Chat Info */}
-                    <div className="flex-1 space-y-2">
-                      <h3 className="neu-title">{chat.title}</h3>
-                      {chat.agent && (
-                        <p className="neu-text neu-sm">
-                          with {chat.agent.name}
-                        </p>
-                      )}
-                      {chat.messages && (
-                        <div className="neu-inset neu-text neu-sm">
-                          {chat.messages.length} messages
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Date */}
-                    <div className="neu-inset neu-text neu-sm flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        {new Date(chat.messages?.[0]?.createdAt || chat.createdAt || Date.now()).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+                <ChatCard key={chat.id} chat={chat} href={`/chat/${chat.id}`} />
               ))}
             </div>
           )}
