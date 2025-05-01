@@ -37,7 +37,7 @@ export default function WalletRechargePage() {
 
   if (status === "loading") {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center neu-container">
         <div className="text-xl">Loading...</div>
       </div>
     );
@@ -130,9 +130,9 @@ export default function WalletRechargePage() {
   const presetAmounts = [50, 100, 200, 500];
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Recharge Your Wallet</h1>
+    <div className="neu-container min-h-screen flex flex-col">
+      <div className="flex items-center justify-between mb-6 max-w-4xl mx-auto w-full pt-8">
+        <h1 className="neu-title neu-3xl font-bold">Recharge Your Wallet</h1>
         <Link
           href="/chat"
           className="rounded-md bg-gray-100 px-4 py-2 text-sm transition hover:bg-gray-200"
@@ -141,31 +141,29 @@ export default function WalletRechargePage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto w-full flex-1">
         <div className="md:col-span-2">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Select Amount</h2>
-            
+          <div className="neu-card">
+            <h2 className="neu-title neu-xl mb-4">Select Amount</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {presetAmounts.map((presetAmount) => (
                 <button
                   key={presetAmount}
                   type="button"
                   onClick={() => setAmount(presetAmount)}
-                  className={`py-3 px-4 rounded-md border ${
+                  className={`py-3 px-4 rounded-full border transition-all duration-200 font-medium ${
                     amount === presetAmount
                       ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-300 hover:border-blue-300"
+                      : "border-gray-300 hover:border-blue-300 bg-white"
                   }`}
                 >
                   {presetAmount} Credits
                 </button>
               ))}
             </div>
-            
             <form onSubmit={handleRecharge} className="space-y-4">
               <div>
-                <label htmlFor="custom-amount" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="custom-amount" className="block neu-text neu-base mb-1">
                   Or enter custom amount:
                 </label>
                 <input
@@ -174,45 +172,39 @@ export default function WalletRechargePage() {
                   min="10"
                   value={amount}
                   onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
-                  className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+                  className="input-custom w-full"
                 />
               </div>
-              
               {error && (
-                <div className="rounded-md bg-red-50 p-4 text-red-700">
+                <div className="neu-error">
                   <p>{error}</p>
                 </div>
               )}
-              
               {success && (
                 <div className="rounded-md bg-green-50 p-4 text-green-700">
                   <p>{success}</p>
                 </div>
               )}
-              
               <div>
                 <button
                   type="submit"
                   disabled={loading || amount < 10}
-                  className="w-full rounded-md bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 disabled:bg-blue-400"
+                  className="neu-button neu-button-hover w-full"
                 >
                   {loading ? "Processing..." : `Recharge ${amount} Credits`}
                 </button>
               </div>
-              
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="neu-text neu-sm mt-2">
                 Payments are securely processed via Razorpay. Your wallet will be credited instantly after successful payment.
               </p>
             </form>
           </div>
         </div>
-        
         <div>
           <WalletDisplay />
-          
-          <div className="bg-white rounded-lg shadow p-6 mt-4">
-            <h3 className="font-semibold mb-2">Why Recharge?</h3>
-            <ul className="space-y-2 text-sm text-gray-600">
+          <div className="neu-card mt-4">
+            <h3 className="neu-title mb-2">Why Recharge?</h3>
+            <ul className="space-y-2 neu-text neu-sm">
               <li>• AI responses cost between 10-20 credits depending on the Pandit's expertise level</li>
               <li>• Basic Pandits: 10 credits | Experienced: 15 credits | Expert: 20 credits</li>
               <li>• Your messages are always free</li>
@@ -221,6 +213,13 @@ export default function WalletRechargePage() {
               <li>• Higher credit packages offer better value</li>
             </ul>
           </div>
+        </div>
+      </div>
+      {/* Secured by Razorpay footer */}
+      <div className="flex flex-col items-center justify-center mt-10 mb-4">
+        <div className="flex items-center gap-2">
+          <img src="https://cdn.razorpay.com/static/assets/razorpay-glyph.svg" alt="Razorpay Logo" className="h-6 w-6" />
+          <span className="neu-text neu-base text-gray-600">Secured by Razorpay</span>
         </div>
       </div>
     </div>
