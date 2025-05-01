@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 
 export function WalletHeader() {
   const { data: session, status } = useSession();
@@ -31,7 +32,7 @@ export function WalletHeader() {
       <div className="flex items-center justify-between max-w-4xl mx-auto w-full px-4">
         <div className="flex items-center gap-2">
           <Link href="/">
-            <img src="/next.svg" alt="Logo" className="h-8 w-8 mr-2" />
+            <Image src="/logo.png" alt="Pandit AI Logo" width={32} height={32} />
           </Link>
           <span className="neu-title neu-xl font-bold tracking-tight select-none">Pandit AI</span>
         </div>

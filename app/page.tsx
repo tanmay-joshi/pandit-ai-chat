@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import mixpanel from "@/lib/mixpanel";
+import { NavigationBar } from "@/components/NavigationBar";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -39,18 +40,19 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-[#F5F2EE] text-gray-900">
       {/* Header/Navigation */}
-      <header className="w-full bg-[#F5F2EE] z-10 sticky top-0 border-b border-gray-200">
-        <div className="container mx-auto px-6 py-6 flex items-center justify-between">
+      <header className="fixed top-0 left-0 w-full z-30 bg-[#F5F2EE22] backdrop-blur-md">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-serif text-gray-900">
+            <img src="/logo.png" alt="Pandit AI Logo" className="h-8 w-8 mr-2" />
+            <h1 className="text-2xl font-serif text-white">
               pandit<span className="font-normal">ai</span>
             </h1>
           </div>
           <nav className="hidden md:flex items-center space-x-12">
-            <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors text-sm">Features</a>
-            <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors text-sm">How It Works</a>
-            <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors text-sm">Pricing</a>
-            <a href="#testimonials" className="text-gray-600 hover:text-gray-900 transition-colors text-sm">Testimonials</a>
+            <a href="#features" className="text-white drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] hover:text-gray-900 transition-colors text-sm">Features</a>
+            <a href="#how-it-works" className="text-white drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] hover:text-gray-900 transition-colors text-sm">How It Works</a>
+            <a href="#pricing" className="text-white drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] hover:text-gray-900 transition-colors text-sm">Pricing</a>
+            <a href="#testimonials" className="text-white drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] hover:text-gray-900 transition-colors text-sm">Testimonials</a>
           </nav>
           <div>
             <Link
@@ -63,19 +65,33 @@ export default function Home() {
           </div>
         </div>
       </header>
-
+      <div className="h-0" /> {/* Spacer to push content below the fixed header, adjust height as needed */}
+      {/* Only show NavigationBar if user is authenticated */}
+      {status === "authenticated" && <NavigationBar />}
       {/* Main Content Container */}
       <main>
       {/* Hero Section */}
-        <section className="py-24 md:py-32">
+        <section className="py-24 md:py-32 bg-[url('/landing_hero.png')] bg-cover bg-center">
         <div className="container mx-auto px-6 max-w-6xl">
             <div className="max-w-3xl mx-auto text-center space-y-8">
               <h1 className="text-5xl md:text-6xl font-serif leading-tight">
                 Your Personal AI Spiritual Guide
               </h1>
-              <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+              <p className="text-lg md:text-xl text-white max-w-2xl mx-auto">
                 Experience the perfect blend of ancient wisdom and modern technology, available 24/7 for personalized guidance.
               </p>
+
+               {/* Trust Indicator */}
+              <div className="pt-16">
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="flex -space-x-2">
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs">P</div>
+                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs">A</div>
+                    <div className="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-xs">V</div>
+                  </div>
+                  <p className="text-sm text-white">Trusted by 25,000+ seekers worldwide</p>
+                </div>
+              </div>
               
               {/* Chat Input Box */}
               <div className="mt-12 max-w-3xl mx-auto">
@@ -133,17 +149,7 @@ export default function Home() {
                 </div>
               </div>
               
-              {/* Trust Indicator */}
-              <div className="pt-16">
-                <div className="flex flex-col items-center justify-center space-y-4">
-                  <div className="flex -space-x-2">
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs">P</div>
-                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs">A</div>
-                    <div className="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-xs">V</div>
-                  </div>
-                  <p className="text-sm text-gray-600">Trusted by 25,000+ seekers worldwide</p>
-                </div>
-              </div>
+             
             </div>
           </div>
         </section>

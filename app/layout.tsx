@@ -1,10 +1,10 @@
 import { Toaster } from "sonner";
-import { NavigationBar } from "@/components/NavigationBar";
 import { cn } from "@/lib/utils";
 import { Providers } from "@/components/Providers";
 import { Libre_Baskerville } from "next/font/google";
 import "./globals.css";
 import { LayoutWithHeader } from "@/components/LayoutWithHeader";
+import { AuthNavigationBar } from "@/components/AuthNavigationBar";
 
 const libreBaskerville = Libre_Baskerville({
   subsets: ["latin"],
@@ -25,7 +25,7 @@ export default function RootLayout({
         libreBaskerville.variable
       )}>
         <Providers>
-          <NavigationBar />
+          <AuthNavigationBar />
           <LayoutWithHeader>{children}</LayoutWithHeader>
           <Toaster position="bottom-right" />
         </Providers>
