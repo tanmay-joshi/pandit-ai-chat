@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Providers } from "@/components/Providers";
 import { Libre_Baskerville } from "next/font/google";
 import "./globals.css";
+import { LayoutWithHeader } from "@/components/LayoutWithHeader";
 
 const libreBaskerville = Libre_Baskerville({
   subsets: ["latin"],
@@ -25,9 +26,7 @@ export default function RootLayout({
       )}>
         <Providers>
           <NavigationBar />
-          <main className="min-h-screen">
-            {children}
-          </main>
+          <LayoutWithHeader>{children}</LayoutWithHeader>
           <Toaster position="bottom-right" />
         </Providers>
       </body>
