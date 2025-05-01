@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatMessages } from "@/components/chat/ChatMessages";
@@ -18,8 +18,10 @@ import { logger } from "@/lib/logger";
 export default function ChatPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialQuestion = searchParams.get("question") ? decodeURIComponent(searchParams.get("question")!) : "";
   const [chat, setChat] = useState<Chat | null>(null);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialQuestion);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);

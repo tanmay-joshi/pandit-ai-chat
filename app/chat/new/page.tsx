@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,9 @@ enum SelectionStep {
 export default function NewChatPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialQuestion = searchParams.get("question") ? decodeURIComponent(searchParams.get("question")!) : "";
+  const [prefilledQuestion] = useState(initialQuestion);
   const [step, setStep] = useState<SelectionStep>(SelectionStep.SelectAgent);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [kundalis, setKundalis] = useState<Kundali[]>([]);
@@ -143,7 +146,11 @@ export default function NewChatPage() {
 
       const createdChat = await res.json();
       logger.info("Chat created successfully:", createdChat.id);
-      router.push(`/chat/${createdChat.id}`);
+      if (prefilledQuestion) {
+        router.push(`/chat/${createdChat.id}?question=${encodeURIComponent(prefilledQuestion)}`);
+      } else {
+        router.push(`/chat/${createdChat.id}`);
+      }
     } catch (err) {
       logger.error("Error creating chat:", err);
       setError(err instanceof Error ? err.message : "Failed to create chat");

@@ -8,6 +8,7 @@ import { ChatCard } from "@/components/ui/ChatCard";
 import { MessageSquare, CheckCircle } from "lucide-react";
 import type { Agent } from "@/types/agent";
 import type { Chat } from "@/types/chat";
+import { HomeChatInput } from "@/components/HomeChatInput";
 
 // Dummy global chats for the 'Global Chats' tab
 const globalChats: Chat[] = [
@@ -201,7 +202,7 @@ export default function HomePage() {
             )}
           </div>
         </section>
-
+        <HomeChatInput />
         {/* Section: Recent/Global Chats with Tabs */}
         <section>
           <div className="flex items-center justify-between mb-2">
