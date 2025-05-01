@@ -1,6 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import mixpanel from "@/lib/mixpanel";
 
 export default function SignIn() {
   return (
@@ -13,7 +14,10 @@ export default function SignIn() {
         
         <div className="mt-8">
           <button
-            onClick={() => signIn("google", { callbackUrl: "/" })}
+            onClick={() => {
+              mixpanel.track("Button Clicked", { button: "Sign In with Google" });
+              signIn("google", { callbackUrl: "/" });
+            }}
             className="flex w-full items-center justify-center gap-3 rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50 focus:outline-offset-0"
           >
             <svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import mixpanel from "@/lib/mixpanel";
 
 export function HomeChatInput() {
   const [input, setInput] = useState("");
@@ -11,6 +12,7 @@ export function HomeChatInput() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
+    mixpanel.track("Chat Input Submitted", { location: "Home", message: input });
     setSending(true);
     // Redirect to new chat with question as query param
     router.push(`/chat/new?question=${encodeURIComponent(input.trim())}`);
@@ -23,7 +25,10 @@ export function HomeChatInput() {
           <input
             type="text"
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={e => {
+              setInput(e.target.value);
+              mixpanel.track("Chat Input Typed", { location: "Home", value: e.target.value });
+            }}
             placeholder="Ask anything..."
             className="w-full rounded-full border border-gray-200 bg-[var(--bg-beige)] px-4 py-3 text-[var(--text-primary)] placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-300"
             disabled={sending}

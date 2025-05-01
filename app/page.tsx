@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
+import mixpanel from "@/lib/mixpanel";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -16,6 +17,14 @@ export default function Home() {
       router.push("/home");
     } else if (status === "unauthenticated") {
       setIsLoading(false);
+    }
+    if (
+      typeof window !== "undefined" &&
+      (window as any).mixpanelReady &&
+      mixpanel &&
+      typeof mixpanel.track === "function"
+    ) {
+      mixpanel.track("Page Opened", { page: "Landing" });
     }
   }, [status, router]);
 
@@ -47,6 +56,7 @@ export default function Home() {
             <Link
               href="/auth/signin"
               className="rounded-full bg-gray-900 px-6 py-2 text-sm text-white transition-all hover:bg-gray-800"
+              onClick={() => mixpanel.track("Button Clicked", { button: "Get Started" })}
             >
               Get Started
             </Link>
@@ -72,6 +82,7 @@ export default function Home() {
                 <div className="bg-white rounded-t-[2rem] p-6 shadow-sm border border-gray-200">
                   <form onSubmit={(e) => {
                     e.preventDefault();
+                    mixpanel.track("Chat Input Submitted", { location: "Landing" });
                     if (status === "authenticated") {
                       router.push("/chat/new");
                     } else {
@@ -106,6 +117,7 @@ export default function Home() {
                       <button 
                         key={index}
                         onClick={() => {
+                          mixpanel.track("Example Prompt Clicked", { prompt });
                           if (status === "authenticated") {
                             router.push("/chat/new");
                           } else {

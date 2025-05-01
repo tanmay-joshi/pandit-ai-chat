@@ -7,6 +7,7 @@ import { Loading } from "@/components/ui/loading";
 import Image from "next/image";
 import { Settings, MessageCircle, Bell, Lock, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import mixpanel from "@/lib/mixpanel";
 
 interface UserProfile {
   id: string;
@@ -52,6 +53,10 @@ export default function ProfilePage() {
       setLoading(false);
     }
   }, [status]);
+
+  useEffect(() => {
+    mixpanel.track("Page Opened", { page: "Profile" });
+  }, []);
 
   if (status === "loading" || loading) {
     return (
@@ -122,7 +127,10 @@ export default function ProfilePage() {
                   Member since {new Date(userData.joinedAt).toLocaleDateString()}
                 </div>
                 <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
+                  onClick={() => {
+                    mixpanel.track("Button Clicked", { button: "Logout" });
+                    signOut({ callbackUrl: "/" });
+                  }}
                   className="mt-6 w-full neu-button neu-button-hover text-center"
                 >
                   Logout

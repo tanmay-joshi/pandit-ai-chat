@@ -9,6 +9,7 @@ import { MessageSquare, CheckCircle } from "lucide-react";
 import type { Agent } from "@/types/agent";
 import type { Chat } from "@/types/chat";
 import { HomeChatInput } from "@/components/HomeChatInput";
+import mixpanel from "@/lib/mixpanel";
 
 // Dummy global chats for the 'Global Chats' tab
 const globalChats: Chat[] = [
@@ -147,6 +148,17 @@ export default function HomePage() {
     fetchChats();
   }, []);
 
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      (window as Window).mixpanelReady &&
+      mixpanel &&
+      typeof mixpanel.track === "function"
+    ) {
+      mixpanel.track("Page Opened", { page: "Home" });
+    }
+  }, []);
+
   if (!mounted || status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -192,7 +204,10 @@ export default function HomePage() {
                     <Button
                       size="sm"
                       className="mt-auto w-full rounded-full neu-button neu-button-hover"
-                      onClick={() => router.push(`/chat/new?agentId=${agent.id}`)}
+                      onClick={() => {
+                        mixpanel.track("Button Clicked", { button: "Start Chat", agentId: agent.id });
+                        router.push(`/chat/new?agentId=${agent.id}`);
+                      }}
                     >
                       Start Chat
                     </Button>

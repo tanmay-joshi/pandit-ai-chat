@@ -1,6 +1,7 @@
 import { Agent } from "@/types/agent";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
+import mixpanel from "@/lib/mixpanel";
 
 interface ChatInputProps {
   input: string;
@@ -40,7 +41,10 @@ export function ChatInput({
                 {suggestedQuestions.map((question, index) => (
                   <button 
                     key={index}
-                    onClick={() => onSuggestedQuestionClick(question)}
+                    onClick={() => {
+                      mixpanel.track("Suggested Question Clicked", { question });
+                      onSuggestedQuestionClick(question);
+                    }}
                     className="flex items-center whitespace-nowrap px-4 py-2 bg-[#F5F2EE] rounded-full text-sm font-primary-regular text-[var(--text-primary)] hover:bg-gray-200 transition-colors border border-gray-100 flex-shrink-0"
                     disabled={sending}
                   >
@@ -52,11 +56,17 @@ export function ChatInput({
             </div>
           )}
           
-          <form onSubmit={onSubmit} className="flex items-center gap-3">
+          <form onSubmit={e => {
+            mixpanel.track("Chat Input Submitted", { location: "Chat", message: input });
+            onSubmit(e);
+          }} className="flex items-center gap-3">
             <input 
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                mixpanel.track("Chat Input Typed", { location: "Chat", value: e.target.value });
+              }}
               placeholder={!isDisabled 
                 ? `Ask ${agent ? agent.name : 'anything'}...` 
                 : "Please complete the setup process first..."}

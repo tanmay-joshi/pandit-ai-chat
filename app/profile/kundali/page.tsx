@@ -11,6 +11,7 @@ import { Loading } from "@/components/ui/loading";
 import { Plus } from "lucide-react";
 import { KundaliCard } from "@/components/KundaliCard";
 import type { Kundali } from "@/types/kundali";
+import mixpanel from "@/lib/mixpanel";
 
 export default function KundaliManagementPage() {
   const { data: session, status } = useSession();
@@ -36,6 +37,10 @@ export default function KundaliManagementPage() {
 
     fetchKundalis();
   }, [status, router]);
+
+  useEffect(() => {
+    mixpanel.track("Page Opened", { page: "Kundali Management" });
+  }, []);
 
   const fetchKundalis = async () => {
     try {
@@ -146,7 +151,10 @@ export default function KundaliManagementPage() {
               </p>
             </div>
             <Button 
-              onClick={() => setShowNewKundaliModal(true)}
+              onClick={() => {
+                mixpanel.track("Button Clicked", { button: "Add New Kundali" });
+                setShowNewKundaliModal(true);
+              }}
               className="neu-button neu-button-hover"
             >
               <Plus className="mr-2 h-4 w-4" />

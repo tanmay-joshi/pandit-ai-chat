@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { CreditCard, PlusCircle, ArrowUpRight, ArrowDownRight, Clock, Wallet, ChevronRight, MessageCircle } from "lucide-react";
+import mixpanel from "@/lib/mixpanel";
 
 interface WalletData {
   balance: number;
@@ -75,6 +76,10 @@ export default function WalletPage() {
     }
   }, [status]);
 
+  useEffect(() => {
+    mixpanel.track("Page Opened", { page: "Wallet" });
+  }, []);
+
   // Use empty wallet data as fallback if server data is not available
   const displayData: WalletData = walletData ?? {
     balance: 0,
@@ -130,14 +135,20 @@ export default function WalletPage() {
                 <p className="neu-title neu-3xl text-primary mb-6">{displayData.balance} Credits</p>
                 <div className="w-full space-y-4">
                   <Button
-                    onClick={() => window.location.href = "/wallet/recharge"}
+                    onClick={() => {
+                      mixpanel.track("Button Clicked", { button: "Add Credits" });
+                      window.location.href = "/wallet/recharge";
+                    }}
                     className="w-full neu-button neu-button-hover"
                   >
                     <PlusCircle className="w-5 h-5 mr-2" />
                     Add Credits
                   </Button>
                   <Button
-                    onClick={() => window.location.href = "/chat/new"}
+                    onClick={() => {
+                      mixpanel.track("Button Clicked", { button: "Start Consultation" });
+                      window.location.href = "/chat/new";
+                    }}
                     className="w-full neu-button neu-button-hover"
                     disabled={displayData.balance <= 0}
                   >

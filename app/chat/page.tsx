@@ -10,6 +10,7 @@ import { Plus, MessageSquare, Calendar } from "lucide-react";
 import { Chat } from "@/types/chat";
 import { Loading } from "@/components/ui/loading";
 import { ChatCard } from "@/components/ui/ChatCard";
+import mixpanel from "@/lib/mixpanel";
 
 export default function ChatsPage() {
   const { data: session, status } = useSession();
@@ -44,6 +45,10 @@ export default function ChatsPage() {
     }
   }, [status, router]);
 
+  useEffect(() => {
+    mixpanel.track("Page Opened", { page: "Chat List" });
+  }, []);
+
   if (status === "loading" || loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center neu-container">
@@ -60,7 +65,10 @@ export default function ChatsPage() {
           <div className="flex items-center justify-between">
             <h1 className="neu-title neu-2xl">Your Consultations</h1>
             <Button 
-              onClick={() => router.push("/chat/new")} 
+              onClick={() => {
+                mixpanel.track("Button Clicked", { button: "New Consultation" });
+                router.push("/chat/new");
+              }} 
               className="neu-button neu-button-hover"
             >
               <Plus className="mr-2 h-4 w-4" />

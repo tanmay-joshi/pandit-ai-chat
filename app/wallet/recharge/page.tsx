@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import WalletDisplay from "@/components/WalletDisplay";
+import mixpanel from "@/lib/mixpanel";
 
 function loadRazorpayScript() {
   return new Promise((resolve) => {
@@ -31,9 +32,18 @@ export default function WalletRechargePage() {
 
   // Redirect to login if not authenticated
   if (status === "unauthenticated") {
+    useEffect(() => {
+      mixpanel.track("Page Opened", { page: "Wallet Recharge (Unauthenticated)" });
+    }, []);
     router.push("/auth/signin");
     return null;
   }
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      mixpanel.track("Page Opened", { page: "Wallet Recharge" });
+    }
+  }, [status]);
 
   if (status === "loading") {
     return (
@@ -48,6 +58,7 @@ export default function WalletRechargePage() {
     setError(null);
     setSuccess(null);
     setLoading(true);
+    mixpanel.track("Payment Attempt", { amount });
 
     if (!session?.user?.email) {
       setError("User session not found. Please login again.");
