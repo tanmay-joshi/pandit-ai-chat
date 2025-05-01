@@ -130,7 +130,7 @@ export default function WalletPage() {
                 <p className="neu-title neu-3xl text-primary mb-6">{displayData.balance} Credits</p>
                 <div className="w-full space-y-4">
                   <Button
-                    onClick={() => setShowRechargeModal(true)}
+                    onClick={() => window.location.href = "/wallet/recharge"}
                     className="w-full neu-button neu-button-hover"
                   >
                     <PlusCircle className="w-5 h-5 mr-2" />
@@ -221,22 +221,6 @@ export default function WalletPage() {
           </div>
         </div>
       </div>
-
-      <Dialog open={showRechargeModal} onOpenChange={setShowRechargeModal}>
-        <DialogContent className="neu-dialog">
-          <DialogHeader>
-            <DialogTitle className="neu-title neu-2xl">Add Credits</DialogTitle>
-            <DialogDescription className="neu-text text-muted-foreground">
-              This feature is coming soon. Please check back later.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setShowRechargeModal(false)} className="neu-button neu-button-hover">
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {error && (
         <div className="fixed bottom-4 right-4 neu-error">

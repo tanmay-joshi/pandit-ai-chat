@@ -6,6 +6,21 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import WalletDisplay from "@/components/WalletDisplay";
 
+function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (document.getElementById("razorpay-script")) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.id = "razorpay-script";
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 export default function WalletRechargePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -34,36 +49,80 @@ export default function WalletRechargePage() {
     setSuccess(null);
     setLoading(true);
 
+    if (!session?.user?.email) {
+      setError("User session not found. Please login again.");
+      setLoading(false);
+      return;
+    }
+
+    // 1. Load Razorpay script
+    const scriptLoaded = await loadRazorpayScript();
+    if (!scriptLoaded) {
+      setError("Failed to load Razorpay SDK. Please try again.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      // In a real app, this would connect to a payment gateway
-      // For now, we'll just simulate a successful recharge
-      const response = await fetch("/api/wallet", {
+      // 2. Create order on backend
+      const orderRes = await fetch("/api/razorpay/order", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount,
-          type: "recharge",
-          description: `Manual recharge of ${amount} credits`,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
       });
+      const orderData = await orderRes.json();
+      if (!orderRes.ok) throw new Error(orderData.error || "Failed to create order");
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to recharge wallet");
-      }
-
-      setSuccess(`Successfully added ${amount} credits to your wallet!`);
-      
-      // Refresh the page after a successful recharge
-      setTimeout(() => {
-        router.refresh();
-      }, 2000);
+      // 3. Open Razorpay Checkout
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Pandit AI Wallet Recharge",
+        description: `Recharge of ${amount} credits`,
+        order_id: orderData.id,
+        handler: async function (response: any) {
+          // 4. On payment success, verify payment and credit wallet
+          setLoading(true);
+          try {
+            const verifyRes = await fetch("/api/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                amount,
+                email: session.user.email,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok) throw new Error(verifyData.error || "Payment verification failed");
+            setSuccess(`Successfully added ${amount} credits to your wallet!`);
+            setTimeout(() => {
+              router.refresh();
+            }, 2000);
+          } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to verify payment");
+          } finally {
+            setLoading(false);
+          }
+        },
+        prefill: {
+          email: session.user.email,
+        },
+        theme: {
+          color: "#2563eb",
+        },
+        modal: {
+          ondismiss: () => setLoading(false),
+        },
+      };
+      // @ts-ignore
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (err) {
-      console.error("Error recharging wallet:", err);
-      setError(err instanceof Error ? err.message : "Failed to recharge wallet");
-    } finally {
+      setError(err instanceof Error ? err.message : "Failed to initiate payment");
       setLoading(false);
     }
   };
@@ -142,7 +201,7 @@ export default function WalletRechargePage() {
               </div>
               
               <p className="text-sm text-gray-500 mt-2">
-                Note: This is a demo application. No actual payment will be processed.
+                Payments are securely processed via Razorpay. Your wallet will be credited instantly after successful payment.
               </p>
             </form>
           </div>
