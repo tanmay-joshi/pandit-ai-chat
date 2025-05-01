@@ -151,7 +151,7 @@ export default function HomePage() {
   useEffect(() => {
     if (
       typeof window !== "undefined" &&
-      (window as Window).mixpanelReady &&
+      (window as any).mixpanelReady &&
       mixpanel &&
       typeof mixpanel.track === "function"
     ) {

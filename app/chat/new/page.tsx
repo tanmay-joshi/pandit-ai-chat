@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -34,7 +34,7 @@ enum SelectionStep {
   SelectKundali = "kundali",
 }
 
-export default function NewChatPage() {
+function NewChatPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -309,5 +309,17 @@ export default function NewChatPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function NewChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <Loading size="lg" />
+      </div>
+    }>
+      <NewChatPageContent />
+    </Suspense>
   );
 } 

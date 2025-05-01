@@ -1,3 +1,5 @@
+/// <reference path="./mixpanel.d.ts" />
+// @ts-ignore
 import mixpanel from 'mixpanel-browser';
 
 export const initMixpanel = () => {

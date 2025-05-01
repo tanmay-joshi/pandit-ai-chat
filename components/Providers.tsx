@@ -10,12 +10,16 @@ function MixpanelIdentify() {
 
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
-      // Identify the user in Mixpanel
-      mixpanel.identify(session.user.id || session.user.email);
-      mixpanel.people.set({
-        $name: session.user.name,
-        $email: session.user.email,
-      });
+      // Get a valid identifier for the user
+      const userId = session.user.id || session.user.email;
+      if (userId) {
+        // Identify the user in Mixpanel
+        mixpanel.identify(userId);
+        mixpanel.people.set({
+          $name: session.user.name || 'Anonymous User',
+          $email: session.user.email || 'unknown@example.com',
+        });
+      }
     } else if (status === "unauthenticated") {
       // Reset Mixpanel identity on logout
       mixpanel.reset();

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { StreamingTextResponse } from "ai";
 import { prisma } from "../../../../../lib/prisma";
 import { authOptions } from "../../../../../lib/auth";
@@ -10,6 +10,9 @@ import {
   RunnableSequence, 
   RunnablePassthrough 
 } from "@langchain/core/runnables";
+import { logger } from "@/lib/logger";
+
+export const dynamic = 'force-dynamic';
 
 // The default system prompt if no agent is specified
 const DEFAULT_SYSTEM_PROMPT = `You are a helpful, knowledgeable, and friendly AI assistant. Answer user questions accurately and provide useful information.
