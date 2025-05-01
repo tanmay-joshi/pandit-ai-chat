@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 import Image from "next/image";
@@ -121,6 +121,12 @@ export default function ProfilePage() {
                 <div className="neu-text text-sm text-muted-foreground">
                   Member since {new Date(userData.joinedAt).toLocaleDateString()}
                 </div>
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="mt-6 w-full neu-button neu-button-hover text-center"
+                >
+                  Logout
+                </button>
               </div>
             </div>
 
